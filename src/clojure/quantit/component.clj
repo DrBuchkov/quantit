@@ -3,11 +3,7 @@
             [clojure.spec.alpha :as s]
             [camel-snake-kebab.core :as csk]))
 
-(s/def ::dep (s/tuple keyword? symbol?))
-
-(s/def ::deps (s/coll-of ::dep :kind vector?))
-
-(s/def ::name symbol?)
+(s/def ::deps (s/coll-of keyword? :kind vector?))
 
 (defn class->kw [class]
   (csk/->kebab-case-keyword class))
@@ -21,19 +17,19 @@
   (mapv (comp symbol name first) deps))
 
 (defn constr-sym [name]
-  (symbol (str "constr-" name)))
+  (if (some? (namespace name))
+    (symbol (str (namespace name) "/new-" name))
+    (symbol (str "new-" name))))
 
 (defn map-constr-sym [name]
-  (symbol (str "map->" name)))
-
-(defn rec-constr-sym [name]
-  (symbol (str "->" name)))
+  (if (some? (namespace name))
+    (symbol (str (namespace name) "/map->" name))
+    (symbol (str "map->" name))))
 
 (defmacro defcomponent [name depsv type & body]
-  {:pre [(s/valid? ::name name)
+  {:pre [(s/valid? symbol? name)
          (s/valid? ::deps depsv)]}
-  (prn (namespace name))
-  (let [props (deps->props depsv)
+  (let [props (conj (deps->props depsv) 'state)
         map-constr (map-constr-sym name)
         constr (constr-sym name)]
     `(do
@@ -45,9 +41,6 @@
        (extend-type ~name
          ~type
          ~@body)
-       (defn ~constr []
-         ~(if (empty? depsv)
-            `(~(rec-constr-sym name))
-            `(component/using
-               (~map-constr {})
-               ~(deps->map depsv)))))))
+       (defn ~constr
+         ([] (~map-constr {}))
+         ([~'initial-state] (~map-constr ~'initial-state))))))
