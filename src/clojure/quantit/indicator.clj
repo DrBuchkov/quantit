@@ -1,6 +1,7 @@
 (ns quantit.indicator
   (:require [clojure.spec.alpha :as s]
-            [com.stuartsierra.component :as component]))
+            [com.stuartsierra.component :as component]
+            [quantit.component :refer [defcomponent]]))
 
 (defprotocol Indicator (value [this bar history]))
 
@@ -8,21 +9,8 @@
 
 (s/def ::indicator indicator?)
 
-(defn deps->map [deps]
-  (into {} (mapv (comp (fn [[first second]]
-                         `[~first '~second])
-                       vec)
-                 (partition 2 deps))))
-
 (defmacro defindicator [name depsv & body]
-  `(do
-     (defrecord ~name ~'[deps]
-       component/Lifecycle
-       (~'start [~'this] (assoc ~'this :deps ~(deps->map depsv)))
-       ~'(stop [this] (dissoc this :deps)))
-     (extend-type ~name
-       Indicator
-       ~@body)))
+  `(defcomponent ~name ~depsv Indicator ~@body))
 
 (comment
   (defrecord Name [deps]
