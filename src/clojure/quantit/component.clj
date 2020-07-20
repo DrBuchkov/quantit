@@ -21,7 +21,7 @@
 (defmacro defcomponent [name depsv type & body]
   {:pre [(s/valid? symbol? name)
          (s/valid? ::deps depsv)]}
-  (let [props (conj (map symbol depsv) 'state)
+  (let [props (conj (mapv symbol depsv) 'state)
         map-constr (map-constr-sym name)
         constr (constr-sym name)]
     `(do

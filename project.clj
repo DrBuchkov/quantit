@@ -5,6 +5,7 @@
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [com.stuartsierra/component "1.0.0"]
+                 [org.clojure/core.match "1.0.0"]
                  [camel-snake-kebab "0.4.1"]]
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]

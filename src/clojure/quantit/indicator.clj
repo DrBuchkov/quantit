@@ -8,7 +8,8 @@
   (update-state-before [this bar history state])
   (update-state-after [this bar history state]))
 
-(defn indicator? [x] (extends? Indicator x))
+(defn indicator? [x] (and (class? x)
+                          (extends? Indicator x)))
 
 (s/def ::indicator indicator?)
 

@@ -1,7 +1,8 @@
 (ns quantit.test
   (:require [quantit.strategy :refer [Strategy entry? on-entry exit? on-exit update? on-update]]
             [quantit.indicator :refer [Indicator value]]
-            [com.stuartsierra.component :as component]))
+            [com.stuartsierra.component :as component])
+  (:import (quantit.test MyUpperIndicator)))
 
 (comment
   (defrecord MyLowerIndicator []
@@ -96,9 +97,11 @@
 
   (deftrader trader
              MyStrategy
-             [MyIndicator MyLowerIndicator MyUpperIndicator]
-             {:my-indicator    MyIndicator
-              :lower-indicator MyLowerIndicator
-              :upper-indicator MyUpperIndicator})
+             (with-indicators
+               MyIndicator
+               [MyLowerIndicator :as :lower-indicator
+                :params {:something 1}
+                :init-state {:my-state 0}]
+               [MyUpperIndicator :as :upper-indicator]))
 
   (backtest trader some-data))

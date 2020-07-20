@@ -14,7 +14,8 @@
   (update-state-before [this bar history state])
   (update-state-after [this bar history state]))
 
-(defn strategy? [x] (extends? Strategy x))
+(defn strategy? [x] (and (class? x)
+                         (extends? Strategy x)))
 
 (s/def ::strategy strategy?)
 
