@@ -90,9 +90,9 @@
 
                (on-update [_ _ _ _])
 
-               (update-state-before [this _ _ state] state)
+               (update-state-before [this _ _ state] state) ;; Updates state before handling bar
 
-               (update-state-after [this _ _ state] state))
+               (update-state-after [this _ _ state] state)) ;; Update state after handling bar
 
   (deftrader trader
              MyStrategy
