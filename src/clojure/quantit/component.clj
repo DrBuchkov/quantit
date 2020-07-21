@@ -10,14 +10,17 @@
 
 (defn constr-sym [name]
   (if (some? (namespace name))
-    (symbol (str (namespace name) "/new-" name))
+    (symbol (namespace name) (str "new-" name))
     (symbol (str "new-" name))))
 
 (defn map-constr-sym [name]
   (if (some? (namespace name))
-    (symbol (str (namespace name) "/map->" name))
+    (symbol (namespace name) (str "map->" name))
     (symbol (str "map->" name))))
 
+
+;; TODO: Add default state
+;; TODO: Add params and default params
 (defmacro defcomponent [name depsv type & body]
   {:pre [(s/valid? symbol? name)
          (s/valid? ::deps depsv)]}
