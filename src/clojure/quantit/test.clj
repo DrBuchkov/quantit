@@ -52,6 +52,7 @@
 
   (update-state-after [this _ _ state] state))
 
+
 (defindicator MyUpperIndicator []
   (value [this _ _ _] 20)
 

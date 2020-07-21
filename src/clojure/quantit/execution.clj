@@ -70,8 +70,7 @@
                                            indicator-mappings))
         system-components (->> indicator-symbols
                                (mapv (declare-component dependency-mappings))
-                               (reduce into)
-                               (conj [((declare-component dependency-mappings :strategy) strategy)])
+                               (concat [((declare-component dependency-mappings :strategy) strategy)])
                                (reduce into))]
     `(def ~name
        (component/system-map
