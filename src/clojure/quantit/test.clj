@@ -1,8 +1,8 @@
 (ns quantit.test
-  (:require [quantit.strategy :refer [Strategy entry? on-entry exit? on-exit update? on-update]]
-            [quantit.indicator :refer [Indicator value]]
-            [com.stuartsierra.component :as component])
-  (:import (quantit.test MyUpperIndicator)))
+  (:require [quantit.strategy :refer [defstrategy]]
+            [quantit.indicator :refer [defindicator]]
+            [quantit.execution :refer [deftrader indicator-forms->map]]
+            [com.stuartsierra.component :as component]))
 
 (comment
   (defrecord MyLowerIndicator []
@@ -44,64 +44,54 @@
                      {:my-indicator :my-indicator}))))
 
 
-(comment
-  "Rough example"
 
-  (defindicator MyLowerIndicator []
-                (value [this _ _ _] 10)
+(defindicator MyLowerIndicator []
+  (value [this _ _ _] 10)
 
-                (update-state-before [this _ _ state] state)
+  (update-state-before [this _ _ state] state)
 
-                (update-state-after [this _ _ state] state))
+  (update-state-after [this _ _ state] state))
 
-  (defindicator MyUpperIndicator []
-                (value [this _ _ _] 20)
+(defindicator MyUpperIndicator []
+  (value [this _ _ _] 20)
 
-                (update-state-before [this _ _ state] state)
+  (update-state-before [this _ _ state] state)
 
-                (update-state-after [this _ _ state] state))
+  (update-state-after [this _ _ state] state))
 
-  (defindicator MyIndicator [:lower-indicator :upper-indicator]
-                (value [this {:keys [lower-indicator upper-indicator] :as bar} _]
-                       (/ (+ upper-indicator
-                             lower-indicator)
-                          2))
+(defindicator MyIndicator [:lower-indicator :upper-indicator]
+  (value [this {:keys [lower-indicator upper-indicator] :as bar} _]
+    (/ (+ upper-indicator
+          lower-indicator)
+       2))
+  (update-state-before [this _ _ state] state)
+  (update-state-after [this _ _ state] state))
 
-                (update-state-before [this _ _ state] state)
+(defstrategy MyStrategy [:my-indicator]
 
-                (update-state-after [this _ _ state] state))
+  (entry? [this {:keys [open high low close volume my-indicator] :as input} _ _]
+    (when (< 0 my-indicator)
+      true))
 
-  (defstrategy MyStrategy [:my-indicator]
+  (on-entry [this {:keys [open high low close volume]} _ _])
 
-               (entry? [this {:keys [open high low close volume my-indicator] :as input} _ _]
-                       (when (< 0 my-indicator)
-                         true))
+  (exit? [this {:keys [open high low close volume my-indicator]}]
+    (when (> 0 my-indicator)
+      true))
 
-               (on-entry [this {:keys [open high low close volume]} _ _]
-                         (buy 10))
+  (on-exit [this {:keys [open high low close volume]} _ _])
 
-               (exit? [this {:keys [open high low close volume my-indicator]}]
-                      (when (> 0 my-indicator)
-                        true))
+  (update? [_ _ _ _] false)
 
-               (on-exit [this {:keys [open high low close volume]} _ _]
-                        (sell 10))
+  (on-update [_ _ _ _])
 
-               (update? [_ _ _ _] false)
+  (update-state-before [this _ _ state] state)              ;; Updates state before handling bar
 
-               (on-update [_ _ _ _])
+  (update-state-after [this _ _ state] state))              ;; Update state after handling bar
 
-               (update-state-before [this _ _ state] state) ;; Updates state before handling bar
-
-               (update-state-after [this _ _ state] state)) ;; Update state after handling bar
-
-  (deftrader trader
-             MyStrategy
-             (with-indicators
-               MyIndicator
-               [MyLowerIndicator :as :lower-indicator
-                :params {:something 1}
-                :init-state {:my-state 0}]
-               [MyUpperIndicator :as :upper-indicator]))
-
-  (backtest trader some-data))
+(deftrader trader
+  :strategy MyStrategy
+  :indicators [MyIndicator
+               [MyLowerIndicator :as :lower-indicator {:params     {:something 1}
+                                                       :init-state {:my-state 0}}]
+               [MyUpperIndicator :as :upper-indicator]])

@@ -1,8 +1,13 @@
 (ns quantit.utils)
 
-(defn extended-indicator-form-args->map [x]
-  (->> x
-       rest
-       (partition 2)
-       (map vec)
-       (into {})))
+
+(defn classname [class]
+  (-> class
+      .getSimpleName))
+
+(defn flat-seq->map [x]
+  (->> x (partition 2) (map vec) (into {})))
+
+(defn inspect [body]
+  (prn body)
+  body)
