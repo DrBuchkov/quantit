@@ -1,4 +1,4 @@
-(ns quantit.test
+(ns quantit.sandbox
   (:require [quantit.strategy :refer [defstrategy]]
             [quantit.indicator :refer [defindicator]]
             [quantit.execution :refer [deftrader indicator-forms->map]]
@@ -74,8 +74,8 @@
   (on-exit [this {:keys [open high low close volume]} _ _])
   (update? [_ _ _ _] false)
   (on-update [_ _ _ _])
-  (update-state-before [this _ _ state] state)              ;; Updates state before handling bar
-  (update-state-after [this _ _ state] state))              ;; Update state after handling bar
+  (update-state-before [this _ _ state] state)
+  (update-state-after [this _ _ state] state))
 
 (deftrader trader
   :strategy MyStrategy
