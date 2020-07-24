@@ -47,17 +47,12 @@
 
 (defindicator MyLowerIndicator []
   (value [this _ _ _] 10)
-
   (update-state-before [this _ _ state] state)
-
   (update-state-after [this _ _ state] state))
-
 
 (defindicator MyUpperIndicator []
   (value [this _ _ _] 20)
-
   (update-state-before [this _ _ state] state)
-
   (update-state-after [this _ _ state] state))
 
 (defindicator MyIndicator [:lower-indicator :upper-indicator]
@@ -69,25 +64,17 @@
   (update-state-after [this _ _ state] state))
 
 (defstrategy MyStrategy [:my-indicator]
-
   (entry? [this {:keys [open high low close volume my-indicator] :as input} _ _]
     (when (< 0 my-indicator)
       true))
-
   (on-entry [this {:keys [open high low close volume]} _ _])
-
   (exit? [this {:keys [open high low close volume my-indicator]}]
     (when (> 0 my-indicator)
       true))
-
   (on-exit [this {:keys [open high low close volume]} _ _])
-
   (update? [_ _ _ _] false)
-
   (on-update [_ _ _ _])
-
   (update-state-before [this _ _ state] state)              ;; Updates state before handling bar
-
   (update-state-after [this _ _ state] state))              ;; Update state after handling bar
 
 (deftrader trader
