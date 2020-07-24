@@ -3,15 +3,15 @@
             [camel-snake-kebab.core :as csk]
             [com.stuartsierra.component :as component]
             [clojure.core.match :refer [match]]
-            [quantit.component :refer [constr-sym]]
+            [quantit.component :refer [constr-sym depsfn-sym]]
             [quantit.indicator :as indicator]
             [quantit.strategy :as strategy]
-            [quantit.utils :refer [flat-seq->map inspect]]))
+            [quantit.utils :refer [flat-seq->map inspect get-component-deps]]))
 
 
 (s/def ::extended-indicator-form-args (s/keys :opt-un [::init-state ::params]))
 (s/def ::extended-indicator-form (s/cat :indicator-class ::indicator/indicator
-                                        :as-kw #(= % :as)
+                                        :->-kw #(= % :->)
                                         :alias keyword?
                                         :args (s/? ::extended-indicator-form-args)))
 
@@ -26,28 +26,38 @@
   (into {} (for [[k v] dependency-mappings]
              [k (csk/->kebab-case-keyword v)])))
 
-
+;; TODO: should filter deps to only contain the dependencies of each component
+;;        to avoid circular dependencies
 (defn- declare-component
-  ([deps]
+  ([deps-map]
    (fn [comp]
-     [(csk/->kebab-case-keyword comp)
-      `(component/using
-         (~(constr-sym comp))
-         ~deps)]))
-  ([deps kw]
+     (let [deps ((eval (depsfn-sym comp)))
+           deps-map (->> deps-map
+                         (filterv (fn [[k _]] (some #(= k %) deps)))
+                         (into {}))]
+       [(csk/->kebab-case-keyword comp)
+        `(component/using
+           (~(constr-sym comp))
+           ~deps-map)])))
+  ([deps-map kw]
    (fn [comp]
-     [kw
-      `(component/using
-         (~(constr-sym comp))
-         ~deps)])))
+     (let [deps ((eval (depsfn-sym comp)))
+           deps-map (->> deps-map
+                         (filterv (fn [[k _]] (some #(= k %) deps)))
+                         (into {}))]
+       [kw
+        `(component/using
+           (~(constr-sym comp))
+           ~deps-map)])
+     )))
 
 (defn indicator-forms->map [ind-form]
   (cond
-    (vector? ind-form) (let [{:keys [as params init-state]}
+    (vector? ind-form) (let [{:keys [-> params init-state]}
                              (if (map? (last ind-form))
-                               (merge {:as (ind-form 2)} (last ind-form))
-                               {:as (ind-form 2)})]
-                         [as {:params     params
+                               (merge {:-> (ind-form 2)} (last ind-form))
+                               {:-> (ind-form 2)})]
+                         [-> {:params     params
                               :init-state init-state
                               :indicator  (first ind-form)}])
     :else [(csk/->kebab-case-keyword ind-form) ind-form]))
