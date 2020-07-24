@@ -56,7 +56,7 @@
   (update-state-after [this _ _ state] state))
 
 (defindicator MyIndicator [:lower-indicator :upper-indicator]
-  (value [this {:keys [lower-indicator upper-indicator] :as bar} _]
+  (value [this {:keys [lower-indicator upper-indicator] :as bar} _ _]
     (/ (+ upper-indicator
           lower-indicator)
        2))
@@ -68,7 +68,7 @@
     (when (< 0 my-indicator)
       true))
   (on-entry [this {:keys [open high low close volume]} _ _])
-  (exit? [this {:keys [open high low close volume my-indicator]}]
+  (exit? [this {:keys [open high low close volume my-indicator]} _ _]
     (when (> 0 my-indicator)
       true))
   (on-exit [this {:keys [open high low close volume]} _ _])

@@ -31,10 +31,13 @@
        (defrecord ~name ~props
          component/Lifecycle
          ~'(start [this] this)
-         ~'(stop [this] this))
-       (extend-type ~name
+         ~'(stop [this] this)
          ~type
-         ~@body)
+         ~@body
+         )
+       ;(extend-type ~name
+       ;  ~type
+       ;  ~@body)
        (defn ~constr
          ([] (~map-constr {}))
          ([~'initial-state] (~map-constr ~'initial-state))))))
