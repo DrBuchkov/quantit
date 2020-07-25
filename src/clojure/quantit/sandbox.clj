@@ -46,39 +46,39 @@
 
 
 (defindicator MyLowerIndicator []
-  (value [this _ _ _] 10)
-  (update-state-before [this _ _ state] state)
-  (update-state-after [this _ _ state] state))
+  (value [this _ _] 10)
+  (update-state-before [this _ _] (:state this))
+  (update-state-after [this _ _] (:state this)))
 
 (defindicator MyUpperIndicator []
-  (value [this _ _ _] 20)
-  (update-state-before [this _ _ state] state)
-  (update-state-after [this _ _ state] state))
+  (value [this _ _] 20)
+  (update-state-before [this _ _] (:state this))
+  (update-state-after [this _ _] (:state this)))
 
 (defindicator MyIndicator [:lower-indicator :upper-indicator]
-  (value [this {:keys [upper-indicator lower-indicator]} _ _]
+  (value [this {:keys [upper-indicator lower-indicator]} _]
     (/ (+ upper-indicator
           lower-indicator)
        2))
-  (update-state-before [this _ _ state] state)
-  (update-state-after [this _ _ state] state))
+  (update-state-before [this _ _] (:state this))
+  (update-state-after [this _ _] (:state this)))
 
 (defstrategy MyStrategy [:my-indicator]
-  (entry? [this {:keys [my-indicator] :as input} _ _]
+  (entry? [this {:keys [my-indicator] :as input} _]
     (when (< 0 my-indicator)
       true))
-  (on-entry [this _ _ _])
-  (exit? [this {:keys [my-indicator]} _ _]
+  (on-entry [this _ _])
+  (exit? [this {:keys [my-indicator]} _]
     (when (> 0 my-indicator)
       true))
-  (on-exit [this _ _ _])
-  (update? [_ _ _ _] false)
-  (on-update [_ _ _ _])
-  (update-state-before [this _ _ state] state)
-  (update-state-after [this _ _ state] state))
+  (on-exit [this _ _])
+  (update? [_ _ _] false)
+  (on-update [_ _ _])
+  (update-state-before [this _ _] (:state this))
+  (update-state-after [this _ _] (:state this)))
 
 (deftrader trader
   :strategy MyStrategy
-  :indicators [MyIndicator
+  :indicators [MyIndicator                                  ;; by default it's aliased as :my-indicator
                [MyLowerIndicator :-> :lower-indicator :params {:something 1} :init-state {:my-state 0}]
                [MyUpperIndicator :-> :upper-indicator]])

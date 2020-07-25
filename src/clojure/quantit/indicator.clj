@@ -4,9 +4,9 @@
             [quantit.component :refer [defcomponent]]))
 
 (defprotocol Indicator
-  (value [this bar history state])
-  (update-state-before [this bar history state])
-  (update-state-after [this bar history state]))
+  (value [this bar history])
+  (update-state-before [this bar history])
+  (update-state-after [this bar history]))
 
 (defn indicator? [x] (and (class? x)
                           (extends? Indicator x)))

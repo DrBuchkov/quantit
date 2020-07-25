@@ -57,11 +57,11 @@
 (defn indicator-forms->map [ind-form]
   (cond
     (vector? ind-form) (let [{:keys [-> params init-state]}
-                             (inspect (->> ind-form
-                                           (rest)
-                                           (partition 2)
-                                           (map vec)
-                                           (into {})))]
+                             (->> ind-form
+                                  (rest)
+                                  (partition 2)
+                                  (map vec)
+                                  (into {}))]
                          [-> {:params     params
                               :init-state init-state
                               :indicator  (first ind-form)}])
