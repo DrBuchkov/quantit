@@ -80,6 +80,5 @@
 (deftrader trader
   :strategy MyStrategy
   :indicators [MyIndicator
-               [MyLowerIndicator :-> :lower-indicator {:params     {:something 1}
-                                                       :init-state {:my-state 0}}]
+               [MyLowerIndicator :-> :lower-indicator :params {:something 1} :init-state {:my-state 0}]
                [MyUpperIndicator :-> :upper-indicator]])

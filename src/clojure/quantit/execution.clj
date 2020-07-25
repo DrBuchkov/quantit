@@ -11,9 +11,12 @@
 
 (s/def ::extended-indicator-form-args (s/keys :opt-un [::init-state ::params]))
 (s/def ::extended-indicator-form (s/cat :indicator-class ::indicator/indicator
-                                        :->-kw #(= % :->)
-                                        :alias keyword?
-                                        :args (s/? ::extended-indicator-form-args)))
+                                        :alias-form (s/? (s/cat :->-kw #(= % :->)
+                                                                :alias keyword?))
+                                        :params-form (s/? (s/cat :params-kw #(= % :params)
+                                                                 :params map?))
+                                        :init-state-form (s/? (s/cat :init-state-kw #(= % :init-state)
+                                                                     :init-state map?))))
 
 (s/def ::indicator-form (s/or :basic ::indicator/indicator
                               :extended ::extended-indicator-form))
@@ -54,9 +57,11 @@
 (defn indicator-forms->map [ind-form]
   (cond
     (vector? ind-form) (let [{:keys [-> params init-state]}
-                             (if (map? (last ind-form))
-                               (merge {:-> (ind-form 2)} (last ind-form))
-                               {:-> (ind-form 2)})]
+                             (inspect (->> ind-form
+                                           (rest)
+                                           (partition 2)
+                                           (map vec)
+                                           (into {})))]
                          [-> {:params     params
                               :init-state init-state
                               :indicator  (first ind-form)}])
