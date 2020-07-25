@@ -3,7 +3,7 @@
             [camel-snake-kebab.core :as csk]
             [com.stuartsierra.component :as component]
             [clojure.core.match :refer [match]]
-            [quantit.component :refer [constr-sym depsfn-sym]]
+            [quantit.component :refer [constr-sym deps-kw]]
             [quantit.indicator :as indicator]
             [quantit.strategy :as strategy]
             [quantit.utils :refer [flat-seq->map inspect get-component-deps]]))
@@ -25,43 +25,23 @@
 
 (s/def ::trader-declarations #(->> % (flat-seq->map) (s/valid? ::trader-declarations-map)))
 
-(defn- normalize-deps [dependency-mappings]
-  (into {} (for [[k v] dependency-mappings]
-             [k (csk/->kebab-case-keyword v)])))
-
-;; TODO: should filter deps to only contain the dependencies of each component
-;;        to avoid circular dependencies
 (defn- declare-component
-  ([deps-map]
-   (fn [comp]
-     (let [deps ((eval (depsfn-sym comp)))
-           deps-map (->> deps-map
-                         (filterv (fn [[k _]] (some #(= k %) deps)))
-                         (into {}))]
-       [(csk/->kebab-case-keyword comp)
-        `(component/using
-           (~(constr-sym comp))
-           ~deps-map)])))
-  ([deps-map kw]
-   (fn [comp]
-     (let [deps ((eval (depsfn-sym comp)))
-           deps-map (->> deps-map
-                         (filterv (fn [[k _]] (some #(= k %) deps)))
-                         (into {}))]
-       [kw
-        `(component/using
-           (~(constr-sym comp))
-           ~deps-map)])
-     )))
+  ([deps-map comp]
+   (let [component ((eval (constr-sym comp)))
+         deps (deps-kw component)
+         deps-map (->> deps-map
+                       (filterv (fn [[k _]] (some #(= k %) deps)))
+                       (into {}))]
+     `(component/using
+        ~component
+        ~deps-map))))
 
 (defn indicator-forms->map [ind-form]
   (cond
     (vector? ind-form) (let [{:keys [-> params init-state]}
                              (->> ind-form
                                   (rest)
-                                  (partition 2)
-                                  (map vec)
-                                  (into {}))]
+                                  (flat-seq->map))]
                          [-> {:params     params
                               :init-state init-state
                               :indicator  (first ind-form)}])
@@ -84,8 +64,8 @@
         dependency-mappings (into {} (mapv indicator-mapping->dependency-mapping
                                            indicator-mappings))
         system-components (->> indicator-symbols
-                               (mapv (declare-component dependency-mappings))
-                               (concat [((declare-component dependency-mappings :strategy) strategy)])
+                               (mapv (fn [component] [(csk/->kebab-case-keyword component) (declare-component dependency-mappings component)]))
+                               (concat [[:strategy (declare-component dependency-mappings strategy)]])
                                (reduce into))]
     `(def ~name
        (component/system-map

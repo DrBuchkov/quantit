@@ -45,6 +45,14 @@
 
 
 
+(comment
+  (defindicator MyLowerIndicator [:deps [:some-dep]
+                                  :default-params {:something 1}
+                                  :default-state {:some-state 2}]
+    (value [this _ _] 10)
+    (update-state-before [this _ _] (:state this))
+    (update-state-after [this _ _] (:state this))))
+
 (defindicator MyLowerIndicator []
   (value [this _ _] 10)
   (update-state-before [this _ _] (:state this))
