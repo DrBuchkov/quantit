@@ -5,9 +5,6 @@
 
 (s/def ::deps (s/coll-of keyword? :kind vector?))
 
-(defn class->kw [class]
-  (csk/->kebab-case-keyword class))
-
 (defn constr-sym [name]
   (if (some? (namespace name))
     (symbol (namespace name) (str "new-" name))
