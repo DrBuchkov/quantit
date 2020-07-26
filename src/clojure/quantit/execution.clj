@@ -54,9 +54,8 @@
 (defn indicator-mapping->dependency-mapping [[k v]]
   [k (-> v indicator-mapping->indicator csk/->kebab-case-keyword)])
 
-(defmacro deftrader [name & body]
-  {:pre [(s/valid? symbol? name)
-         (s/valid? ::trader-declarations body)]}
+(defmacro create-trader [& body]
+  {:pre [(s/valid? ::trader-declarations body)]}
   (let [{:keys [strategy indicators]} (flat-seq->map body)
         indicator-mappings (into {} (mapv indicator-forms->map indicators))
         indicator-symbols (mapv (fn [[_ v]] (indicator-mapping->indicator v))
@@ -67,6 +66,5 @@
                                (mapv (fn [component] [(csk/->kebab-case-keyword component) (declare-component dependency-mappings component)]))
                                (concat [[:strategy (declare-component dependency-mappings strategy)]])
                                (reduce into))]
-    `(def ~name
-       (component/system-map
-         ~@system-components))))
+    `(component/system-map
+       ~@system-components)))
