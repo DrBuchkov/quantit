@@ -51,20 +51,30 @@
   (or (:indicator mapping)
       mapping))
 
-(defn indicator-mapping->dependency-mapping [[k v]]
-  [k (-> v indicator-mapping->indicator csk/->kebab-case-keyword)])
+(defn indicator-mappings-transform [f mappings]
+  (mapv (fn [[k v]] [k (f v)]) mappings))
+
+(defn indicator-mapping->dependency-mapping [mappings]
+  (->> mappings
+       (indicator-mappings-transform #(-> %
+                                          indicator-mapping->indicator
+                                          csk/->kebab-case-keyword))
+       (into {})))
+
+(defn indicator-mapping->symbols [mappings]
+  (->> mappings
+       (mapv (fn [[_ v]] (indicator-mapping->indicator v)))))
 
 (defmacro trade-system [& body]
   {:pre [(s/valid? ::trader-declarations body)]}
   (let [{:keys [strategy indicators]} (flat-seq->map body)
         indicator-mappings (into {} (mapv indicator-forms->map indicators))
-        indicator-symbols (mapv (fn [[_ v]] (indicator-mapping->indicator v))
-                                indicator-mappings)
-        dependency-mappings (into {} (mapv indicator-mapping->dependency-mapping
-                                           indicator-mappings))
+        indicator-symbols (indicator-mapping->symbols indicator-mappings)
+        dependency-mappings (indicator-mapping->dependency-mapping indicator-mappings)
         system-components (->> indicator-symbols
                                (mapv (fn [component] [(csk/->kebab-case-keyword component) (declare-component dependency-mappings component)]))
                                (concat [[:strategy (declare-component dependency-mappings strategy)]])
-                               (reduce into))]
+                               (reduce into))
+        ]
     `(component/system-map
        ~@system-components)))
