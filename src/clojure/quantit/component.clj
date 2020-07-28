@@ -39,9 +39,13 @@
     `(do
        (defrecord ~name ~props
          component/Lifecycle
-         (~'start [~'this] (-> ~'this
-                               (assoc :params ~default-params)
-                               (assoc :state ~default-init-state)))
+         (~'start [~'this] (let [~'this (if (some? (:params ~'this))
+                                          ~'this
+                                          (assoc ~'this :params ~default-params))
+                                 ~'this (if (some? (:state ~'this))
+                                          ~'this
+                                          (assoc ~'this :state ~default-init-state))]
+                             ~'this))
          ~'(stop [this] this)
          Component
          (~'deps-kw [~'this] ~dependencies)

@@ -26,54 +26,43 @@
 (s/def ::trader-declarations #(->> % (flat-seq->map) (s/valid? ::trader-declarations-map)))
 
 (defn- declare-component
-  ([deps-map comp]
+  ([indicator-map comp]
    (let [component ((eval (constr-sym comp)))
          deps (deps-kw component)
-         deps-map (->> deps-map
-                       (filterv (fn [[k _]] (some #(= k %) deps)))
+         params (:params (indicator-map comp))
+         state (:init-state (indicator-map comp))
+         deps-map (->> indicator-map
+                       (filterv (fn [[_ v]] (some #(= (:alias v) %) deps)))
+                       (mapv (fn [[k v]] [(:alias v) (csk/->kebab-case-keyword k)]))
                        (into {}))]
      `(component/using
-        ~component
+        ~(let [component (if (some? params) (assoc component :params params) component)
+               component (if (some? state) (assoc component :state state) component)]
+           component)
         ~deps-map))))
 
 (defn indicator-forms->map [ind-form]
   (cond
-    (vector? ind-form) (let [{:keys [-> params init-state]}
-                             (->> ind-form
-                                  (rest)
-                                  (flat-seq->map))]
-                         [-> {:params     params
-                              :init-state init-state
-                              :indicator  (first ind-form)}])
-    :else [(csk/->kebab-case-keyword ind-form) ind-form]))
-
-(defn indicator-mapping->indicator [mapping]
-  (or (:indicator mapping)
-      mapping))
-
-(defn indicator-mappings-transform [f mappings]
-  (mapv (fn [[k v]] [k (f v)]) mappings))
-
-(defn indicator-mapping->dependency-mapping [mappings]
-  (->> mappings
-       (indicator-mappings-transform #(-> %
-                                          indicator-mapping->indicator
-                                          csk/->kebab-case-keyword))
-       (into {})))
+    (vector? ind-form) (let [{:keys [-> params init-state]} (->> ind-form
+                                                                 (rest)
+                                                                 (flat-seq->map))]
+                         [(first ind-form) {:params     params
+                                            :init-state init-state
+                                            :alias      ->}])
+    :else [ind-form {:alias (csk/->kebab-case-keyword ind-form)}]))
 
 (defn indicator-mapping->symbols [mappings]
   (->> mappings
-       (mapv (fn [[_ v]] (indicator-mapping->indicator v)))))
+       (mapv (fn [[k _]] k))))
 
 (defmacro trade-system [& body]
   {:pre [(s/valid? ::trader-declarations body)]}
   (let [{:keys [strategy indicators]} (flat-seq->map body)
         indicator-mappings (into {} (mapv indicator-forms->map indicators))
         indicator-symbols (indicator-mapping->symbols indicator-mappings)
-        dependency-mappings (indicator-mapping->dependency-mapping indicator-mappings)
         system-components (->> indicator-symbols
-                               (mapv (fn [component] [(csk/->kebab-case-keyword component) (declare-component dependency-mappings component)]))
-                               (concat [[:strategy (declare-component dependency-mappings strategy)]])
+                               (mapv (fn [component] [(csk/->kebab-case-keyword component) (declare-component indicator-mappings component)]))
+                               (concat [[:strategy (declare-component indicator-mappings strategy)]])
                                (reduce into))
         ]
     `(component/system-map

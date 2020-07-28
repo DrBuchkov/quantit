@@ -87,5 +87,7 @@
 
 (def trader (trade-system :strategy MyStrategy
                           :indicators [MyIndicator          ;; by default it's aliased as :my-indicator
-                                       [MyLowerIndicator :-> :lower-indicator :params {:something 1} :init-state {:my-state 0}]
+                                       [MyLowerIndicator :-> :lower-indicator
+                                        :params {:something 1}
+                                        :init-state {:my-state 0}]
                                        [MyUpperIndicator :-> :upper-indicator]]))
