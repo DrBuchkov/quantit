@@ -71,9 +71,9 @@
   (update-state-before [this _ _] (:state this))
   (update-state-after [this _ _] (:state this)))
 
-(defstrategy MyStrategy [:my-indicator :lower-indicator :upper-indicator]
-  (entry? [this {:keys [my-indicator lower-indicator upper-indicator] :as input} _]
-    (when (< 0 (+ my-indicator lower-indicator upper-indicator))
+(defstrategy MyStrategy [:my-indicator]
+  (entry? [this {:keys [my-indicator] :as input} _]
+    (when (< 0 my-indicator)
       true))
   (on-entry [this _ _])
   (exit? [this {:keys [my-indicator]} _]
