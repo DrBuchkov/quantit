@@ -46,9 +46,9 @@
 
 
 (comment
-  (defindicator MyLowerIndicator [:deps [:some-dep]
+  (defindicator MyLowerIndicator [:dependencies [:some-dep]
                                   :default-params {:something 1}
-                                  :default-state {:some-state 2}]
+                                  :default-init-state {:some-state 2}]
     (value [this _ _] 10)
     (update-state-before [this _ _] (:state this))
     (update-state-after [this _ _] (:state this))))
@@ -63,7 +63,7 @@
   (update-state-before [this _ _] (:state this))
   (update-state-after [this _ _] (:state this)))
 
-(defindicator MyIndicator [:lower-indicator :upper-indicator]
+(defindicator MyIndicator [:dependencies [:lower-indicator :upper-indicator]]
   (value [this {:keys [upper-indicator lower-indicator]} _]
     (/ (+ upper-indicator
           lower-indicator)
@@ -71,7 +71,7 @@
   (update-state-before [this _ _] (:state this))
   (update-state-after [this _ _] (:state this)))
 
-(defstrategy MyStrategy [:my-indicator]
+(defstrategy MyStrategy [:dependencies [:my-indicator]]
   (entry? [this {:keys [my-indicator] :as input} _]
     (when (< 0 my-indicator)
       true))
