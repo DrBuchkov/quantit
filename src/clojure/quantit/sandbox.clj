@@ -71,7 +71,7 @@
   (update-state-before [this _ _] (:state this))
   (update-state-after [this _ _] (:state this)))
 
-(defstrategy MyStrategy [:dependencies [:my-indicator] :default-params {:something 1}]
+(defstrategy MyStrategy [:dependencies [:my-indicator]]
   (entry? [this {:keys [my-indicator] :as input} _]
     (when (< 0 my-indicator)
       true))
