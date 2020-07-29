@@ -1,7 +1,7 @@
 (ns quantit.sandbox
   (:require [quantit.strategy :refer [defstrategy]]
             [quantit.indicator :refer [defindicator]]
-            [quantit.execution :refer [trade-system indicator-forms->map]]
+            [quantit.execution :refer [trade-system]]
             [com.stuartsierra.component :as component]))
 
 (comment
@@ -71,7 +71,7 @@
   (update-state-before [this _ _] (:state this))
   (update-state-after [this _ _] (:state this)))
 
-(defstrategy MyStrategy [:dependencies [:my-indicator]]
+(defstrategy MyStrategy [:dependencies [:my-indicator] :default-params {:something 1}]
   (entry? [this {:keys [my-indicator] :as input} _]
     (when (< 0 my-indicator)
       true))
@@ -86,6 +86,8 @@
   (update-state-after [this _ _] (:state this)))
 
 (def trader (trade-system :strategy MyStrategy
+                          :params {:my-param 1}
+                          :init-state {:some-state 0}
                           :indicators [MyIndicator          ;; by default it's aliased as :my-indicator
                                        [MyLowerIndicator :-> :lower-indicator
                                         :params {:something 1}
