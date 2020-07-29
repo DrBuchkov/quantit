@@ -1,4 +1,4 @@
-(ns quantit.execution
+(ns quantit.trade-system
   (:require [clojure.spec.alpha :as s]
             [camel-snake-kebab.core :as csk]
             [com.stuartsierra.component :as component]

@@ -1,7 +1,7 @@
 (ns quantit.sandbox
   (:require [quantit.strategy :refer [defstrategy]]
             [quantit.indicator :refer [defindicator]]
-            [quantit.execution :refer [trade-system]]
+            [quantit.trade-system :refer [trade-system]]
             [com.stuartsierra.component :as component]))
 
 (comment
