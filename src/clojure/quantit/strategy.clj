@@ -20,5 +20,5 @@
 (s/def ::strategy strategy?)
 
 ;; TODO: Augment body to add default implementation for update-state (or any other) methods if not provided
-(defmacro defstrategy [name depsv & body]
-  `(defcomponent ~name ~depsv Strategy ~@body))
+(defmacro defstrategy [name basis & body]
+  `(defcomponent ~name ~basis Strategy ~@body))

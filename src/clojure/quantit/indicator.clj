@@ -16,8 +16,8 @@
 (s/def ::indicators (s/coll-of indicator? :kind vector?))
 
 ;; TODO: Augment body to add default implementation for update-state (or any other) methods if not provided
-(defmacro defindicator [name depsv & body]
-  `(defcomponent ~name ~depsv Indicator ~@body))
+(defmacro defindicator [name basis & body]
+  `(defcomponent ~name ~basis Indicator ~@body))
 
 (comment
   (defrecord Name [deps]

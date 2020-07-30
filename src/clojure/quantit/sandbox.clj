@@ -2,7 +2,12 @@
   (:require [quantit.strategy :refer [defstrategy]]
             [quantit.indicator :refer [defindicator]]
             [quantit.trade-system :refer [trade-system]]
-            [com.stuartsierra.component :as component]))
+            [quantit.utils :refer [zoned-date-time->calendar
+                                   nyse-market-open-date-time
+                                   nyse-market-close-date-time]]
+            [quantit.backtest :refer [backtest]]
+            [com.stuartsierra.component :as component]
+            [tick.alpha.api :as t]))
 
 (comment
   (defrecord MyLowerIndicator []
@@ -83,3 +88,5 @@
                                         :params {:something 1}
                                         :init-state {:my-state 0}]
                                        [MyUpperIndicator :-> :upper-indicator]]))
+
+(comment (backtest trader "SPY" :daily (t/new-date 2019 12 19)))

@@ -31,7 +31,7 @@
         deps (deps-kw component)
         params (:params (indicator-map comp))
         state (:init-state (indicator-map comp))
-        deps-map (->> (inspect indicator-map)
+        deps-map (->> indicator-map
                       (filterv (fn [[_ v]] (some #(= (:alias v) %) deps)))
                       (mapv (fn [[k v]] [(:alias v) (csk/->kebab-case-keyword k)]))
                       (into {}))]
@@ -63,11 +63,13 @@
         indicator-mappings (into {} (mapv indicator-forms->map indicators))
         indicator-symbols (indicator-mapping->symbols indicator-mappings)
         system-components (->> indicator-symbols
-                               (mapv (fn [component] [(csk/->kebab-case-keyword component) (declare-component indicator-mappings component)]))
-                               (concat [[:strategy (declare-component (-> indicator-mappings
-                                                                          (assoc strategy {:params     params
-                                                                                           :init-state init-state}))
-                                                                      strategy)]])
+                               (mapv (fn [component] [(csk/->kebab-case-keyword component)
+                                                      (declare-component indicator-mappings component)]))
+                               (concat [[:strategy (declare-component
+                                                     (-> indicator-mappings
+                                                         (assoc strategy {:params     params
+                                                                          :init-state init-state}))
+                                                     strategy)]])
                                (reduce into))
         ]
     `(component/system-map

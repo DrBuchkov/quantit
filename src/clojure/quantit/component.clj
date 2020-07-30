@@ -24,8 +24,6 @@
   (deps [this])
   (deps-kw [this]))
 
-;; TODO: Add default state
-;; TODO: Add params and default params
 (defmacro defcomponent [name basis type & body]
   {:pre [(s/valid? symbol? name)
          (s/valid? ::basis basis)]}
