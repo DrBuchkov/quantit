@@ -13,7 +13,9 @@
 (s/def ::subscriber subscriber?)
 
 (defprotocol OrderAdapter
-  (run-orders [this orderc]))
+  (handle-order! [this order])
+  (update-before [this order])
+  (update-after [this order]))
 
 (defn orderer? [adapter]
   (satisfies? OrderAdapter adapter))

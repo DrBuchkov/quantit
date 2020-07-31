@@ -4,6 +4,8 @@
   (:import (java.time ZonedDateTime)
            (java.util GregorianCalendar)))
 
+(defn end? [x] (= x 'end))
+
 (defn get-component-deps [component]
   {:pre (s/valid? class? component)}
   (filterv #(and (not= 'state %)

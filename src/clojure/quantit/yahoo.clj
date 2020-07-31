@@ -8,9 +8,6 @@
                    :weekly  Interval/WEEKLY
                    :monthly Interval/MONTHLY})
 
-
-
-
 (defn get-quotes [^String symbol ^LocalDate from ^LocalDate to interval]
   (let [interval (kw->Interval interval)
         from (zoned-date-time->calendar (nyse-market-open-date-time from))
