@@ -24,7 +24,8 @@
 (defn update-system-state-after [trade-system bar bar-history]
   (update-system-state trade-system bar bar-history update-state-after))
 
-;; TODO: Add some kind of capability to start with bar history older than system start
+;; TODO: Add some kind of capability to start with bar history older than system start or maybe even delegate the
+;;        responsibility to the user to keep track of bar history through state
 (defn run-trade-system [trade-system ^SubscriberAdapter subscriber ^OrderAdapter orderer]
   {:pre [(s/valid? ::adp/subscriber subscriber)
          (s/valid? ::adp/orderer orderer)]}
