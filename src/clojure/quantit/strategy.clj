@@ -10,9 +10,7 @@
   (exit? [this bar history])
   (on-exit [this bar history])                              ;; TODO: Not clear if on-exit method is needed, since there's only one way you can close a position
   (update? [this bar history])                              ;; TODO: Here update? and on-update should also accept the current position
-  (on-update [this bar history])
-  (update-state-before [this bar history])                  ;; Updates state before handling bar
-  (update-state-after [this bar history]))                  ;; Update state after handling bar
+  (on-update [this bar history]))
 
 (defn strategy? [x] (and (class? x)
                          (extends? Strategy x)))

@@ -22,7 +22,23 @@
 
 (defprotocol Component
   (deps [this])
-  (deps-kw [this]))
+  (deps-kw [this])
+  (update-state-before [this bar bar-history])
+  (update-state-after [this bar bar-history]))
+
+(def default-update-state-before-form '(update-state-before [this bar bar-history] (:state this)))
+(def default-update-state-after-form '(update-state-after [this bar bar-history] (:state this)))
+
+(def comp-methods #{'update-state-before 'update-state-after})
+
+(defn comp-method? [form]
+  (some #(= % (first form))
+        comp-methods))
+
+(defn update-state-after-implemented? [body]
+  (some #(= 'update-state-after (first %)) body))
+(defn update-state-before-implemented? [body]
+  (some #(= 'update-state-before (first %)) body))
 
 (defmacro defcomponent [name basis type & body]
   {:pre [(s/valid? symbol? name)
@@ -33,7 +49,18 @@
         constr (constr-sym name)
         dependencies (or dependencies [])
         default-params (or default-params {})
-        default-init-state (or default-init-state {})]
+        default-init-state (or default-init-state {})
+        type-body (remove comp-method? body)
+
+        comp-body (filter comp-method? body)
+
+        comp-body (if (not (update-state-after-implemented? comp-body))
+                    (conj comp-body default-update-state-after-form)
+                    comp-body)
+
+        comp-body (if (not (update-state-before-implemented? comp-body))
+                    (conj comp-body default-update-state-before-form)
+                    comp-body)]
     `(do
        (defrecord ~name ~props
          component/Lifecycle
@@ -48,8 +75,10 @@
          Component
          (~'deps-kw [~'this] ~dependencies)
          (~'deps [~'this] (mapv #(get ~'this %) (deps-kw ~'this)))
+         ~@comp-body
+
          ~type
-         ~@body)
+         ~@type-body)
        (defn ~constr
          ([] (~map-constr {}))
          ([~'initial-state] (~map-constr ~'initial-state))))))

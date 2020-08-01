@@ -17,5 +17,5 @@
                  [org.apache.commons/commons-lang3 "3.10"]]
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]
-  :repl-options {:init-ns quantit.core}
+  :repl-options {:init-ns quantit.sandbox}
   :profiles {:uberjar {:aot :all}})

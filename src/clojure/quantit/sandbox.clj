@@ -49,22 +49,16 @@
                      {:my-indicator :my-indicator}))))
 
 (defindicator MyLowerIndicator []
-  (value [this _ _] 10)
-  (update-state-before [this _ _] (:state this))
-  (update-state-after [this _ _] (:state this)))
+  (value [this _ _] 10))
 
 (defindicator MyUpperIndicator []
-  (value [this _ _] 20)
-  (update-state-before [this _ _] (:state this))
-  (update-state-after [this _ _] (:state this)))
+  (value [this _ _] 20))
 
 (defindicator MyIndicator [:dependencies [:lower-indicator :upper-indicator]]
   (value [this {:keys [upper-indicator lower-indicator]} _]
     (/ (+ upper-indicator
           lower-indicator)
-       2))
-  (update-state-before [this _ _] (:state this))
-  (update-state-after [this _ _] (:state this)))
+       2)))
 
 (defstrategy MyStrategy [:dependencies [:my-indicator]]
   (entry? [this {:keys [my-indicator] :as input} _]
@@ -76,9 +70,7 @@
       true))
   (on-exit [this _ _])
   (update? [_ _ _] false)
-  (on-update [_ _ _])
-  (update-state-before [this _ _] (:state this))
-  (update-state-after [this _ _] (:state this)))
+  (on-update [_ _ _]))
 
 (def trader (trade-system :strategy MyStrategy
                           :params {:my-param 1}
