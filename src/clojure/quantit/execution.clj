@@ -11,9 +11,9 @@
 
 (defn update-system-state [trade-system bar bar-history update-statefn]
   ;{:pre [(s/valid? ::bar/bar bar)]}
-  (let [update-systemfn (fn [component bar bar-history]
+  (let [update-systemfn (fn [component]
                           (assoc component :state (update-statefn component bar bar-history)))]
-    (component/update-system trade-system (keys trade-system) update-systemfn bar bar-history)))
+    (component/update-system trade-system (keys trade-system) update-systemfn)))
 
 (defn update-system-state-before [trade-system bar bar-history]
   (update-system-state trade-system bar bar-history update-state-before))
