@@ -49,7 +49,10 @@
                      {:my-indicator :my-indicator}))))
 
 (defindicator MyLowerIndicator []
-  (value [this _ _] 10))
+  (value [this _ _] 10)
+  (update-state-before [this _ _]
+    (let [{:keys [state]} this]
+      (update state :my-state inc))))
 
 (defindicator MyUpperIndicator []
   (value [this _ _] 20))

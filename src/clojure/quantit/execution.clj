@@ -4,19 +4,16 @@
             [quantit.bar :as bar]
             [quantit.component :refer [update-state-before update-state-after]]
             [clojure.core.async :as async]
-            [clojure.spec.alpha :as s])
+            [clojure.spec.alpha :as s]
+            [com.stuartsierra.component :refer [update-system]])
   (:import (quantit.adapter SubscriberAdapter OrderAdapter)))
 
 
 (defn update-system-state [trade-system bar bar-history update-statefn]
   ;{:pre [(s/valid? ::bar/bar bar)]}
-  (loop [trade-system trade-system
-         kvs (seq trade-system)]
-    (if (empty? kvs)
-      trade-system
-      (let [[k v] (first kvs)
-            new-state (update-statefn v bar bar-history)]
-        (recur (assoc-in trade-system [k :state] new-state) (rest kvs))))))
+  (let [update-statefn (fn [component bar bar-history]
+                         (assoc component :state (update-statefn component bar bar-history)))]
+    (update-system trade-system (keys trade-system) update-statefn bar bar-history)))
 
 (defn update-system-state-before [trade-system bar bar-history]
   (update-system-state trade-system bar bar-history update-state-before))
