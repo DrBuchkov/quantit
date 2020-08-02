@@ -52,7 +52,7 @@
   (value [this _ _] 10)
   (update-state-before [this _ _]
     (let [{:keys [state]} this]
-      (update state :my-state inc))))
+      (update state :counter inc))))
 
 (defindicator MyUpperIndicator []
   (value [this _ _] 20))
@@ -81,7 +81,7 @@
                           :indicators [MyIndicator          ;; by default it's aliased as :my-indicator
                                        [MyLowerIndicator :-> :lower-indicator
                                         :params {:something 1}
-                                        :init-state {:my-state 0}]
+                                        :init-state {:counter 0}]
                                        [MyUpperIndicator :-> :upper-indicator]]))
 
 (comment (backtest trader "SPY" :daily (t/new-date 2019 12 19)))
