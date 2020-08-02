@@ -5,7 +5,7 @@
             [quantit.component :refer [update-state-before update-state-after]]
             [clojure.core.async :as async]
             [clojure.spec.alpha :as s]
-            [com.stuartsierra.component :refer [update-system]])
+            [com.stuartsierra.component :as component])
   (:import (quantit.adapter SubscriberAdapter OrderAdapter)))
 
 
@@ -13,7 +13,7 @@
   ;{:pre [(s/valid? ::bar/bar bar)]}
   (let [update-systemfn (fn [component bar bar-history]
                           (assoc component :state (update-statefn component bar bar-history)))]
-    (update-system trade-system (keys trade-system) update-systemfn bar bar-history)))
+    (component/update-system trade-system (keys trade-system) update-systemfn bar bar-history)))
 
 (defn update-system-state-before [trade-system bar bar-history]
   (update-system-state trade-system bar bar-history update-state-before))
