@@ -61,12 +61,14 @@
 (defmacro trade-system [& {:keys [strategy indicators]}]
   {:pre [(s/valid? :quantit.trade-system/strategy-form strategy)
          (s/valid? :quantit.trade-system/indicator-forms indicators)]}
-  (let [conformed-indicators (s/conform
-                               :quantit.trade-system/indicator-forms
-                               indicators)
-        aliases (into {} (mapv conformed-indicator->alias-map conformed-indicators))
-        indicator-opts (into {} (mapv conformed-indicator->opts conformed-indicators))
-        indicator-symbols (mapv conformed-indicator->sym conformed-indicators)
+  (let [conformed-indicators (s/conform :quantit.trade-system/indicator-forms indicators)
+        aliases (->> conformed-indicators
+                     (mapv conformed-indicator->alias-map)
+                     (into {}))
+        indicator-opts (->> conformed-indicators
+                            (mapv conformed-indicator->opts)
+                            (into {}))
+        indicator-symbols (->> conformed-indicators (mapv conformed-indicator->sym))
         conformed-strategy-map (->> strategy
                                     (s/conform :quantit.trade-system/strategy-form)
                                     flat-seq->map)
