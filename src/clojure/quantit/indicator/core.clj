@@ -1,7 +1,6 @@
-(ns quantit.indicator
-  (:require [clojure.spec.alpha :as s]
-            [com.stuartsierra.component :as component]
-            [quantit.component :refer [defcomponent]]))
+(ns quantit.indicator.core
+  (:require [com.stuartsierra.component :as component]
+            [quantit.component.core :refer [defcomponent]]))
 
 (defprotocol Indicator
   (value [this bar history]))
@@ -9,9 +8,7 @@
 (defn indicator? [x] (and (class? x)
                           (extends? Indicator x)))
 
-(s/def ::indicator indicator?)
 
-(s/def ::indicators (s/coll-of indicator? :kind vector?))
 
 ;; TODO: Augment body to add default implementation for update-state (or any other) methods if not provided
 (defmacro defindicator [name basis & body]

@@ -1,30 +1,10 @@
-(ns quantit.trade-system
+(ns quantit.trade-system.core
   (:require [clojure.spec.alpha :as s]
             [camel-snake-kebab.core :as csk]
             [com.stuartsierra.component :as component]
             [clojure.core.match :refer [match]]
-            [quantit.component :refer [constr-sym deps-kw]]
-            [quantit.indicator :as indicator]
+            [quantit.component.core :refer [constr-sym deps-kw]]
             [quantit.utils :refer [flat-seq->map inspect get-component-deps]]))
-
-(s/def ::params map?)
-(s/def ::init-state map?)
-(s/def ::extended-indicator-form-args (s/keys :opt-un [::init-state ::params]))
-(s/def ::extended-indicator-form (s/cat :indicator-class ::indicator/indicator
-                                        :alias-form (s/? (s/cat :->-kw #(= % :->)
-                                                                :alias keyword?))
-                                        :params-form (s/? (s/cat :params-kw #(= % :params)
-                                                                 :params ::params))
-                                        :init-state-form (s/? (s/cat :init-state-kw #(= % :init-state)
-                                                                     :init-state ::init-state))))
-
-(s/def ::indicator-form (s/or :basic ::indicator/indicator
-                              :extended ::extended-indicator-form))
-
-(s/def ::trade-system-declarations-map (s/keys :req-un [::strategy ::indicators]
-                                               :opt-un [::params ::init-state]))
-
-(s/def ::trade-system-declarations #(->> % (flat-seq->map) (s/valid? ::trade-system-declarations-map)))
 
 (defn- declare-component [indicator-map comp]
   (let [component ((eval (constr-sym comp)))
@@ -57,10 +37,10 @@
   (->> mappings
        (mapv (fn [[k _]] k))))
 
-(defmacro trade-system [& body]
-  {:pre [(s/valid? ::trade-system-declarations body)]}
-  (let [{:keys [strategy indicators params init-state]} (flat-seq->map body)
-        indicator-mappings (into {} (mapv indicator-forms->map indicators))
+(defmacro trade-system [& {:keys [strategy params init-state indicators]}]
+  {:pre [(s/valid? symbol? strategy)
+         (s/valid? :quantit.trade-system/indicator-forms indicators)]}
+  (let [indicator-mappings (into {} (mapv indicator-forms->map indicators))
         indicator-symbols (indicator-mapping->symbols indicator-mappings)
         system-components (->> indicator-symbols
                                (mapv (fn [component] [(csk/->kebab-case-keyword component)
@@ -70,7 +50,7 @@
                                                          (assoc strategy {:params     params
                                                                           :init-state init-state}))
                                                      strategy)]])
-                               (reduce into))
-        ]
-    `(component/system-map
-       ~@system-components)))
+                               (reduce into))]
+    `(component/start-system
+       (component/system-map
+         ~@system-components))))

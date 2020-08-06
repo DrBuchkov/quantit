@@ -1,13 +1,24 @@
 (ns quantit.sandbox
-  (:require [quantit.strategy :refer [defstrategy]]
-            [quantit.indicator :refer [defindicator]]
-            [quantit.trade-system :refer [trade-system]]
-            [quantit.utils :refer [zoned-date-time->calendar
-                                   nyse-market-open-date-time
-                                   nyse-market-close-date-time]]
-            [quantit.backtest :refer [backtest]]
-            [com.stuartsierra.component :as component]
-            [tick.alpha.api :as t]))
+  (:require
+    ;; Specs
+    [quantit.adapter.spec :refer :all]
+    [quantit.backtest.spec :refer :all]
+    [quantit.bar.spec :refer :all]
+    [quantit.component.spec :refer :all]
+    [quantit.indicator.spec :refer :all]
+    [quantit.order.spec :refer :all]
+    [quantit.strategy.spec :refer :all]
+    [quantit.trade-system.spec :refer :all]
+    ;; Deps
+    [quantit.strategy.core :refer [defstrategy]]
+    [quantit.indicator.core :refer [defindicator]]
+    [quantit.trade-system.core :refer [trade-system]]
+    [quantit.utils :refer [zoned-date-time->calendar
+                           nyse-market-open-date-time
+                           nyse-market-close-date-time]]
+    [quantit.backtest.core :refer [backtest]]
+    [com.stuartsierra.component :as component]
+    [tick.alpha.api :as t]))
 
 (comment
   (defrecord MyLowerIndicator []

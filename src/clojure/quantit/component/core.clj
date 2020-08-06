@@ -1,24 +1,26 @@
-(ns quantit.component
+(ns quantit.component.core
   (:require [com.stuartsierra.component :as component]
             [clojure.spec.alpha :as s]
             [quantit.utils :refer [flat-seq->map]]))
-
-(s/def ::dependencies (s/coll-of keyword? :kind vector?))
-(s/def ::default-params map?)
-(s/def ::default-init-state map?)
-(s/def ::basis-map (s/keys :opt-un [::dependencies ::default-params ::default-init-state]))
-
-(s/def ::basis #(->> % flat-seq->map (s/def ::basis-map)))
 
 (defn constr-sym [name]
   (if (some? (namespace name))
     (symbol (namespace name) (str "new-" name))
     (symbol (str "new-" name))))
 
+
+(s/fdef constr-sym
+        :args (s/cat :name symbol?)
+        :ret symbol?)
+
 (defn map-constr-sym [name]
   (if (some? (namespace name))
     (symbol (namespace name) (str "map->" name))
     (symbol (str "map->" name))))
+
+(s/fdef map-constr-sym
+        :args (s/cat :name symbol?)
+        :ret symbol?)
 
 (defprotocol Component
   (deps [this])
@@ -37,12 +39,14 @@
 
 (defn update-state-after-implemented? [body]
   (some #(= 'update-state-after (first %)) body))
+
 (defn update-state-before-implemented? [body]
   (some #(= 'update-state-before (first %)) body))
 
-(defmacro defcomponent [name basis type & body]
+(defmacro defcomponent [name basis comp-type & body]
   {:pre [(s/valid? symbol? name)
-         (s/valid? ::basis basis)]}
+         (s/valid? :quantit.component/basis basis)
+         (s/valid? :quantit.component/type comp-type)]}
   (let [{:keys [dependencies default-params default-init-state]} (flat-seq->map basis)
         props (conj (mapv symbol dependencies) 'state 'params)
         map-constr (map-constr-sym name)
@@ -77,8 +81,9 @@
          (~'deps [~'this] (mapv #(get ~'this %) (deps-kw ~'this)))
          ~@comp-body
 
-         ~type
+         ~comp-type
          ~@type-body)
        (defn ~constr
          ([] (~map-constr {}))
          ([~'initial-state] (~map-constr ~'initial-state))))))
+

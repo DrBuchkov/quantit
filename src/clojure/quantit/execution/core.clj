@@ -1,12 +1,11 @@
-(ns quantit.execution
-  (:require [quantit.adapter :as adp :refer [run-subscriber handle-order! update-before update-after]]
+(ns quantit.execution.core
+  (:require [quantit.adapter.core :refer [run-subscriber handle-order! update-before update-after]]
+            [quantit.component.core :refer [update-state-before update-state-after]]
             [quantit.utils :refer [end? inspect]]
-            [quantit.bar :as bar]
-            [quantit.component :refer [update-state-before update-state-after]]
             [clojure.core.async :as async]
             [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component])
-  (:import (quantit.adapter SubscriberAdapter OrderAdapter)))
+  (:import (quantit.adapter.core SubscriberAdapter OrderAdapter)))
 
 
 (defn update-system-state [trade-system bar bar-history update-statefn]
@@ -24,8 +23,8 @@
 ;; TODO: Add some kind of capability to start with bar history older than system start or maybe even delegate the
 ;;        responsibility to the user to keep track of bar history through state
 (defn run-trade-system [trade-system ^SubscriberAdapter subscriber ^OrderAdapter orderer]
-  {:pre [(s/valid? ::adp/subscriber subscriber)
-         (s/valid? ::adp/orderer orderer)]}
+  {:pre [(s/valid? :quantit.adapter/subscriber subscriber)
+         (s/valid? :quantit.adapter/orderer orderer)]}
   (let [barc (async/chan)
         orderc (async/chan)]
     (async/go (run-subscriber subscriber barc))

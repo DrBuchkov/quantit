@@ -1,7 +1,7 @@
-(ns quantit.strategy
+(ns quantit.strategy.core
   (:require [clojure.spec.alpha :as s]
-            [quantit.indicator :refer [defindicator]]
-            [quantit.component :refer [defcomponent]]))
+            [quantit.indicator.core :refer [defindicator]]
+            [quantit.component.core :refer [defcomponent]]))
 
 
 (defprotocol Strategy
@@ -15,7 +15,7 @@
 (defn strategy? [x] (and (class? x)
                          (extends? Strategy x)))
 
-(s/def ::strategy strategy?)
+
 
 ;; TODO: Augment body to add default implementation for update-state (or any other) methods if not provided
 (defmacro defstrategy [name basis & body]

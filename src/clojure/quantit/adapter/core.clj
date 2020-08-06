@@ -1,6 +1,4 @@
-(ns quantit.adapter
-  (:require [clojure.spec.alpha :as s])
-  )
+(ns quantit.adapter.core)
 
 
 ;; TODO: Maybe this should be a Java class
@@ -10,8 +8,6 @@
 (defn subscriber? [adapter]
   (satisfies? SubscriberAdapter adapter))
 
-(s/def ::subscriber subscriber?)
-
 (defprotocol OrderAdapter
   (handle-order! [this order])
   (update-before [this order])
@@ -19,5 +15,3 @@
 
 (defn orderer? [adapter]
   (satisfies? OrderAdapter adapter))
-
-(s/def ::orderer orderer?)
