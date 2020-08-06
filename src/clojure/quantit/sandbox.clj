@@ -86,13 +86,21 @@
   (update? [_ _ _] false)
   (on-update [_ _ _]))
 
-(def trader (trade-system :strategy MyStrategy
-                          :params {:my-param 1}
-                          :init-state {:some-state 0}
+(def trader (trade-system :strategy [MyStrategy :params {:my-param 1} :init-state {:some-state 0}]
                           :indicators [MyIndicator          ;; by default it's aliased as :my-indicator
                                        [MyLowerIndicator :-> :lower-indicator
                                         :params {:something 1}
                                         :init-state {:counter 0}]
                                        [MyUpperIndicator :-> :upper-indicator]]))
+
+(comment
+  "Non-macro version of trade-system"
+  (def trader (trade-system :strategy (map->MyStrategy {:params {:my-param 1}
+                                                        :state  {:some-state 0}})
+                            :indicators [(map->MyIndicator {}) ;; by default it's aliased as :my-indicator
+                                         [(map->MyIndicator {:params     {:something 1}
+                                                             :init-state {:counter 0}})
+                                          :-> :lower-indicator]
+                                         [(map->MyUpperIndicator {}) :-> :upper-indicator]])))
 
 (comment (backtest trader "SPY" :daily (t/new-date 2019 12 19)))

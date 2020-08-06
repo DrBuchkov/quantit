@@ -1,5 +1,6 @@
 (ns quantit.component.spec
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            [quantit.component.core :refer [map-constr-sym constr-sym]]))
 
 
 (s/def :quantit.component/dependencies (s/coll-of keyword? :kind vector?))
@@ -14,3 +15,12 @@
                                                                        :v :quantit.component/default-init-state))))
 
 (s/def :quantit.component/type #{'quantit.indicator.core/Indicator 'quantit.strategy.core/Strategy})
+
+
+(s/fdef map-constr-sym
+        :args (s/cat :name symbol?)
+        :ret symbol?)
+
+(s/fdef constr-sym
+        :args (s/cat :name symbol?)
+        :ret symbol?)

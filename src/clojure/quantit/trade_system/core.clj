@@ -6,14 +6,11 @@
             [quantit.component.core :refer [constr-sym deps-kw]]
             [quantit.utils :refer [flat-seq->map inspect get-component-deps]]))
 
-(defn- declare-component [indicator-map comp]
+(defn- declare-component [comp {:keys [params state]} aliases]
   (let [component ((eval (constr-sym comp)))
         deps (deps-kw component)
-        params (:params (indicator-map comp))
-        state (:init-state (indicator-map comp))
-        deps-map (->> indicator-map
-                      (filterv (fn [[_ v]] (some #(= (:alias v) %) deps)))
-                      (mapv (fn [[k v]] [(:alias v) (csk/->kebab-case-keyword k)]))
+        deps-map (->> aliases
+                      (filter (fn [[k _]] (some #(= k %) deps)))
                       (into {}))]
     `(component/using
        ~(let [component (if (some? params) (assoc component :params params) component)
@@ -25,9 +22,7 @@
 
 (defn- indicator-forms->map [ind-form]
   (cond
-    (vector? ind-form) (let [{:keys [-> params init-state]} (->> ind-form
-                                                                 (rest)
-                                                                 (flat-seq->map))]
+    (vector? ind-form) (let [{:keys [-> params init-state]} (->> ind-form rest flat-seq->map)]
                          [(first ind-form) {:params     params
                                             :init-state init-state
                                             :alias      ->}])
@@ -37,20 +32,62 @@
   (->> mappings
        (mapv (fn [[k _]] k))))
 
-(defmacro trade-system [& {:keys [strategy params init-state indicators]}]
-  {:pre [(s/valid? symbol? strategy)
+(defn- conformed-indicator->alias-map [ind]
+  (condp = (first ind)
+    :basic (let [k (csk/->kebab-case-keyword (last ind))]
+             [k k])
+    :extended (let [k (-> (last ind)
+                          (get-in [:alias-form :alias]))
+
+                    v (-> (last ind)
+                          (get-in [:indicator-class])
+                          csk/->kebab-case-keyword)]
+                [k v])))
+
+(defn conformed-indicator->opts [indform]
+  (condp = (first indform)
+    :basic {(last indform) {}}
+    :extended (let [val (last indform)]
+                {(:indicator-class val)
+                 {:params (get-in val [:params-form :params])
+                  :state  (get-in val [:init-state-form :init-state])}})))
+
+(defn conformed-indicator->sym [indform]
+  (condp = (first indform)
+    :basic (last indform)
+    :extended (:indicator-class (last indform))))
+
+
+(defmacro trade-system [& {:keys [strategy indicators]}]
+  {:pre [(s/valid? :quantit.trade-system/strategy-form strategy)
          (s/valid? :quantit.trade-system/indicator-forms indicators)]}
-  (let [indicator-mappings (into {} (mapv indicator-forms->map indicators))
-        indicator-symbols (indicator-mapping->symbols indicator-mappings)
+  (let [conformed-indicators (s/conform
+                               :quantit.trade-system/indicator-forms
+                               indicators)
+        aliases (into {} (mapv conformed-indicator->alias-map conformed-indicators))
+        indicator-opts (into {} (mapv conformed-indicator->opts conformed-indicators))
+        indicator-symbols (mapv conformed-indicator->sym conformed-indicators)
+        conformed-strategy-map (->> strategy
+                                    (s/conform :quantit.trade-system/strategy-form)
+                                    flat-seq->map)
+        strategy-sym (or (:basic conformed-strategy-map)
+                         (get-in conformed-strategy-map [:extended :strategy-class]))
+        strategy-params (get-in conformed-strategy-map
+                                [:extended :params-form :params])
+        strategy-init-state (get-in conformed-strategy-map
+                                    [:extended :init-state-form :init-state])
         system-components (->> indicator-symbols
                                (mapv (fn [component] [(csk/->kebab-case-keyword component)
-                                                      (declare-component indicator-mappings component)]))
+                                                      (declare-component component (indicator-opts
+                                                                                     component)
+                                                                         aliases)]))
                                (concat [[:strategy (declare-component
-                                                     (-> indicator-mappings
-                                                         (assoc strategy {:params     params
-                                                                          :init-state init-state}))
-                                                     strategy)]])
+                                                     strategy-sym
+                                                     {:params strategy-params
+                                                      :state  strategy-init-state}
+                                                     aliases)]])
                                (reduce into))]
     `(component/start-system
        (component/system-map
-         ~@system-components))))
+         ~@system-components)))
+  )

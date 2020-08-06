@@ -8,19 +8,10 @@
     (symbol (namespace name) (str "new-" name))
     (symbol (str "new-" name))))
 
-
-(s/fdef constr-sym
-        :args (s/cat :name symbol?)
-        :ret symbol?)
-
 (defn map-constr-sym [name]
   (if (some? (namespace name))
     (symbol (namespace name) (str "map->" name))
     (symbol (str "map->" name))))
-
-(s/fdef map-constr-sym
-        :args (s/cat :name symbol?)
-        :ret symbol?)
 
 (defprotocol Component
   (deps [this])
