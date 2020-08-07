@@ -18,21 +18,7 @@
           component)
        ~deps-map)))
 
-
-
-(defn- indicator-forms->map [ind-form]
-  (cond
-    (vector? ind-form) (let [{:keys [-> params init-state]} (->> ind-form rest flat-seq->map)]
-                         [(first ind-form) {:params     params
-                                            :init-state init-state
-                                            :alias      ->}])
-    :else [ind-form {:alias (csk/->kebab-case-keyword ind-form)}]))
-
-(defn- indicator-mapping->symbols [mappings]
-  (->> mappings
-       (mapv (fn [[k _]] k))))
-
-(defn- conformed-indicator->alias-map [ind]
+(defn- ind->alias-pair [ind]
   (condp = (first ind)
     :basic (let [k (csk/->kebab-case-keyword (last ind))]
              [k k])
@@ -44,7 +30,7 @@
                           csk/->kebab-case-keyword)]
                 [k v])))
 
-(defn conformed-indicator->opts [indform]
+(defn ind->opts [indform]
   (condp = (first indform)
     :basic {(last indform) {}}
     :extended (let [val (last indform)]
@@ -52,7 +38,7 @@
                  {:params (get-in val [:params-form :params])
                   :state  (get-in val [:init-state-form :init-state])}})))
 
-(defn conformed-indicator->sym [indform]
+(defn ind->sym [indform]
   (condp = (first indform)
     :basic (last indform)
     :extended (:indicator-class (last indform))))
@@ -63,12 +49,12 @@
          (s/valid? :quantit.trade-system/indicator-forms indicators)]}
   (let [conformed-indicators (s/conform :quantit.trade-system/indicator-forms indicators)
         aliases (->> conformed-indicators
-                     (mapv conformed-indicator->alias-map)
+                     (mapv ind->alias-pair)
                      (into {}))
         indicator-opts (->> conformed-indicators
-                            (mapv conformed-indicator->opts)
+                            (mapv ind->opts)
                             (into {}))
-        indicator-symbols (->> conformed-indicators (mapv conformed-indicator->sym))
+        indicator-symbols (->> conformed-indicators (mapv ind->sym))
         conformed-strategy-map (->> strategy
                                     (s/conform :quantit.trade-system/strategy-form)
                                     flat-seq->map)
@@ -91,5 +77,4 @@
                                (reduce into))]
     `(component/start-system
        (component/system-map
-         ~@system-components)))
-  )
+         ~@system-components))))
