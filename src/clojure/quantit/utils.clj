@@ -1,18 +1,9 @@
 (ns quantit.utils
-  (:require [tick.alpha.api :as t]
-            [clojure.spec.alpha :as s])
+  (:require [tick.alpha.api :as t])
   (:import (java.time ZonedDateTime)
            (java.util GregorianCalendar)))
 
 (defn end? [x] (= x 'end))
-
-(defn get-component-deps [component]
-  {:pre (s/valid? class? component)}
-  (filterv #(and (not= 'state %)
-                 (not= 'params %))
-           (-> component
-               (.getMethod "getBasis" nil)
-               (.invoke nil nil))))
 
 (defn flat-seq->map [x]
   (->> x (partition 2) (map vec) (into {})))

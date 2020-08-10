@@ -4,7 +4,7 @@
             [com.stuartsierra.component :as component]
             [clojure.core.match :refer [match]]
             [quantit.component.core :refer [constr-sym deps-kw]]
-            [quantit.utils :refer [flat-seq->map inspect get-component-deps]]))
+            [quantit.utils :refer [flat-seq->map inspect]]))
 
 (defn- declare-component [comp {:keys [params state]} aliases]
   (let [component ((eval (constr-sym comp)))
