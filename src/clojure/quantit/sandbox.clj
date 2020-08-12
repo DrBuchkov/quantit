@@ -36,10 +36,12 @@
        2)))
 
 (defstrategy MyStrategy [:dependencies [:my-indicator]]
-  (entry? [this {:keys [my-indicator] :as input} _]
-    (when (< 0 my-indicator)
-      true))
-  (on-entry [this _ _])
+  (entry? [this]
+    (r/or (r/rule :some-rule "MyLowerIndicator is higher than my MyUpperIndicator"
+                  (fn [{:keys [bar bar-history]}]))
+          (r/rule :other-rule "MyUpperIndicator is higher than my MyLowerIndicator")))
+  (on-entry [this _ _]
+    (buy 10))
   (exit? [this {:keys [my-indicator]} _]
     (when (> 0 my-indicator)
       true)))
