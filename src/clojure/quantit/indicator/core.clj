@@ -3,7 +3,7 @@
             [quantit.component.core :refer [defcomponent]]))
 
 (defprotocol Indicator
-  (value [this bar history]))
+  (value [this bars]))
 
 (defn indicator? [x] (and (class? x)
                           (extends? Indicator x)))

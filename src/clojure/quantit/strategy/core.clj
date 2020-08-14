@@ -1,20 +1,21 @@
 (ns quantit.strategy.core
   (:require [clojure.spec.alpha :as s]
             [quantit.indicator.core :refer [defindicator]]
-            [quantit.component.core :refer [defcomponent]]))
+            [quantit.component.core :refer [defcomponent]]
+            [quantit.rule.core :as r]))
 
 
 (defprotocol Strategy
-  (entry? [this bar history])
-  (on-entry [this bar history])
-  (exit? [this bar history])
-  (update? [this bar history])                              ;; TODO: Here update? and on-update should also accept the current position
-  (on-update [this bar history]))
+  (entry? [this])
+  (on-entry [this data])
+  (exit? [this])
+  (update? [this])                                          ;; TODO: Here update? and on-update should also accept the current position
+  (on-update [this data]))
 
 (defn strategy? [x] (and (class? x)
                          (extends? Strategy x)))
 
-(def default-update? '(update? [_ _ _] false))
+(def default-update? '(update? [_] (r/empty-rule)))
 
 (defn update?-implemented? [body]
   (some #(= 'update? (first %)) body))

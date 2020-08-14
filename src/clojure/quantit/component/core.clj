@@ -16,11 +16,11 @@
 (defprotocol Component
   (deps [this])
   (deps-kw [this])
-  (update-state-before [this bar bar-history])
-  (update-state-after [this bar bar-history]))
+  (update-state-before [this bars])
+  (update-state-after [this bars]))
 
-(def default-update-state-before-form '(update-state-before [this bar bar-history] (:state this)))
-(def default-update-state-after-form '(update-state-after [this bar bar-history] (:state this)))
+(def default-update-state-before-form '(update-state-before [this _] (:state this)))
+(def default-update-state-after-form '(update-state-after [this _] (:state this)))
 
 (def comp-methods #{'update-state-before 'update-state-after})
 

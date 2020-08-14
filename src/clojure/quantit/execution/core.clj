@@ -7,18 +7,19 @@
             [com.stuartsierra.component :as component])
   (:import (quantit.adapter.core SubscriberAdapter OrderAdapter)))
 
+;; TODO: Parameters should be changed to bars list (first bar is current one)
+(defn update-system-state [trade-system bars update-statefn]
+  (component/update-system
+    trade-system
+    (keys trade-system)
+    (fn [component]
+      (assoc component :state (update-statefn component bars)))))
 
-(defn update-system-state [trade-system bar bar-history update-statefn]
-  ;{:pre [(s/valid? ::bar/bar bar)]}
-  (let [update-systemfn (fn [component]
-                          (assoc component :state (update-statefn component bar bar-history)))]
-    (component/update-system trade-system (keys trade-system) update-systemfn)))
+(defn update-system-state-before [trade-system bars]
+  (update-system-state trade-system bars update-state-before))
 
-(defn update-system-state-before [trade-system bar bar-history]
-  (update-system-state trade-system bar bar-history update-state-before))
-
-(defn update-system-state-after [trade-system bar bar-history]
-  (update-system-state trade-system bar bar-history update-state-after))
+(defn update-system-state-after [trade-system bars]
+  (update-system-state trade-system bars update-state-after))
 
 ;; TODO: Add some kind of capability to start with bar history older than system start or maybe even delegate the
 ;;        responsibility to the user to keep track of bar history through state
@@ -36,11 +37,12 @@
                     (recur (update-after orderer order) (async/<! orderc))))))
     (loop [trade-system trade-system
            bar (async/<!! barc)
-           bar-history []]
-      (if (not (end? bar))
-        (let [trade-system (update-system-state-before trade-system bar bar-history)]
-          (inspect bar)                                     ;; TODO: handle new incoming bar
-          (recur (update-system-state-after trade-system bar bar-history)
-                 (async/<!! barc)
-                 (conj bar-history bar)))
-        (do (async/>!! orderc bar))))))
+           bar-history '()]
+      (let [bars (conj bar-history bar)]
+        (if (not (end? bar))
+          (let [trade-system (update-system-state-before trade-system bars)]
+            (inspect bar)                                   ;; TODO: handle new incoming bar
+            (recur (update-system-state-after trade-system bars)
+                   (async/<!! barc)
+                   (conj bar-history bar)))
+          (do (async/>!! orderc bar)))))))

@@ -6,37 +6,27 @@
             [quantit.component.core :refer [constr-sym deps-kw]]
             [quantit.utils :refer [flat-seq->map inspect]]))
 
-(defn- declare-component [comp {:keys [params state]} aliases]
+(defn- declare-component [comp {:keys [params state]}]
   (let [component ((eval (constr-sym comp)))
-        deps (deps-kw component)
-        deps-map (->> aliases
-                      (filter (fn [[k _]] (some #(= k %) deps)))
-                      (into {}))]
+        deps (deps-kw component)]
     `(component/using
        ~(let [component (if (some? params) (assoc component :params params) component)
               component (if (some? state) (assoc component :state state) component)]
           component)
-       ~deps-map)))
+       ~deps)))
 
-(defn- ind->alias-pair [ind]
+(defn- ind->alias [ind]
   (condp = (first ind)
-    :basic (let [k (csk/->kebab-case-keyword (last ind))]
-             [k k])
-    :extended (let [k (-> (last ind)
-                          (get-in [:alias-form :alias]))
-
-                    v (-> (last ind)
-                          (get-in [:indicator-class])
-                          csk/->kebab-case-keyword)]
-                [k v])))
+    :basic (csk/->kebab-case-keyword (last ind))
+    :extended (-> (last ind)
+                  (get-in [:alias-form :alias]))))
 
 (defn ind->opts [indform]
   (condp = (first indform)
-    :basic {(last indform) {}}
+    :basic {}
     :extended (let [val (last indform)]
-                {(:indicator-class val)
-                 {:params (get-in val [:params-form :params])
-                  :state  (get-in val [:init-state-form :init-state])}})))
+                {:params (get-in val [:params-form :params])
+                 :state  (get-in val [:init-state-form :init-state])})))
 
 (defn ind->sym [indform]
   (condp = (first indform)
@@ -49,11 +39,12 @@
          (s/valid? :quantit.trade-system/indicator-forms indicators)]}
   (let [conformed-indicators (s/conform :quantit.trade-system/indicator-forms indicators)
         aliases (->> conformed-indicators
-                     (mapv ind->alias-pair)
-                     (into {}))
+                     (mapv ind->alias))
         indicator-opts (->> conformed-indicators
-                            (mapv ind->opts)
-                            (into {}))
+                            (mapv ind->opts))
+        alias-opt-map (->> indicator-opts
+                           (mapv (fn [alias opts] [alias opts]) aliases)
+                           (into {}))
         indicator-symbols (->> conformed-indicators (mapv ind->sym))
         conformed-strategy-map (->> strategy
                                     (s/conform :quantit.trade-system/strategy-form)
@@ -65,15 +56,14 @@
         strategy-init-state (get-in conformed-strategy-map
                                     [:extended :init-state-form :init-state])
         system-components (->> indicator-symbols
-                               (mapv (fn [component] [(csk/->kebab-case-keyword component)
-                                                      (declare-component component (indicator-opts
-                                                                                     component)
-                                                                         aliases)]))
+                               (mapv (fn [alias indicator]
+                                       [alias
+                                        (declare-component indicator (alias-opt-map
+                                                                       alias))]) aliases)
                                (concat [[:strategy (declare-component
                                                      strategy-sym
                                                      {:params strategy-params
-                                                      :state  strategy-init-state}
-                                                     aliases)]])
+                                                      :state  strategy-init-state})]])
                                (reduce into))]
     `(component/start-system
        (component/system-map
