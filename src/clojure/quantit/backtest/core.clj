@@ -24,10 +24,10 @@
 
 
 (defn backtest
-  ([trade-system bar-series]
+  ([trade-system symbol bar-series]
    {:pre [(s/valid? :quantit.bar/bar-series bar-series)]}
    (let [backtest-adapter (new-BacktestAdapter bar-series)]
-     (run-trade-system trade-system backtest-adapter backtest-adapter)
+     (run-trade-system symbol trade-system backtest-adapter backtest-adapter)
      (:orders backtest-adapter)))
 
   ([trade-system ^String symbol interval ^LocalDate from]
@@ -37,5 +37,5 @@
    {:pre [(s/valid? :quantit.backtest/interval interval)]}
    (let [bar-series (yahoo/get-quotes symbol from to interval)
          backtest-adapter (new-BacktestAdapter bar-series)]
-     (run-trade-system trade-system backtest-adapter backtest-adapter)
+     (run-trade-system trade-system symbol backtest-adapter backtest-adapter)
      (:orders backtest-adapter))))

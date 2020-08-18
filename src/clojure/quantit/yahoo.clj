@@ -14,11 +14,11 @@
         to (zoned-date-time->calendar (nyse-market-close-date-time to))]
     (mapv (fn [^HistoricalQuote quote]
             {:datetime  (-> quote .getDate .toInstant)
-             :open      (-> quote .getOpen)
-             :high      (-> quote .getHigh)
-             :low       (-> quote .getLow)
-             :close     (-> quote .getClose)
-             :volume    (-> quote .getVolume)
-             :adj-close (-> quote .getAdjClose)})
+             :open      (-> quote .getOpen double)
+             :high      (-> quote .getHigh double)
+             :low       (-> quote .getLow double)
+             :close     (-> quote .getClose double)
+             :volume    (-> quote .getVolume double)
+             :adj-close (-> quote .getAdjClose double)})
           (-> (YahooFinance/get symbol)
               (.getHistory from to interval)))))

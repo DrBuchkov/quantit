@@ -12,13 +12,14 @@
     [quantit.rule.spec :refer :all]
     ;; Deps
     [quantit.strategy.core :refer [defstrategy]]
-    [quantit.indicator.core :refer [defindicator]]
+    [quantit.indicator.core :refer [defindicator value]]
     [quantit.trade-system.core :refer [trade-system]]
     [quantit.utils :refer [zoned-date-time->calendar
                            nyse-market-open-date-time
                            nyse-market-close-date-time]]
     [quantit.backtest.core :refer [backtest]]
     [quantit.rule.core :as r]
+    [quantit.order.core :refer [market-order-buy]]
     [clojure.core.match :as m]
     [tick.alpha.api :as t]))
 
@@ -26,29 +27,33 @@
   (value [this bars]
     (let [{:keys [window]} (:params this)]
       (when (>= (count bars) window)
-        (->> bars
-             (take window)
-             (reduce +)
-             (/ window))))))
+        (/ (->> bars
+                (take window)
+                (map :adj-close)
+                (reduce +))
+           window)))))
 
 (defstrategy SimpleMovingAverageStrategy [:dependencies [:short-sma :long-sma]]
   (entry? [this]
     (r/rule :sma-buy "Short SMA crosses over Long SMA"
-            (fn [{:keys [short-sma long-sma]}]
-              (when (and short-sma
-                         long-sma
-                         (> short-sma long-sma))
-                true))))
+            (fn [bars]
+              (let [short-sma (-> this :short-sma (value bars))
+                    long-sma (-> this :long-sma (value bars))]
+                (and short-sma long-sma
+                     (> short-sma long-sma))))))
 
   (on-entry [this {:keys [satisfied]}]
     (when (= satisfied :sma-buy)
-      {:buy 1}))
+      (market-order-buy 1)))
 
   (exit? [this]
     (r/rule :sma-sell "Long SMA crosses over Short SMA"
-            (fn [{:keys [short-sma long-sma]}]
-              (when (< short-sma long-sma)
-                true)))))
+            (fn [bars]                                      ;; TODO: Need to be able to pass position
+              (let [short-sma (-> this :short-sma (value bars))
+                    long-sma (-> this :long-sma (value bars))]
+                ;(prn "Short-sma: " short-sma)
+                ;(prn "Long-sma: " long-sma)
+                (< short-sma long-sma))))))
 
 (def trader (trade-system :strategy SimpleMovingAverageStrategy
                           :indicators [[SimpleMovingAverage :-> :short-sma

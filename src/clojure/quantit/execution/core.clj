@@ -1,13 +1,18 @@
 (ns quantit.execution.core
   (:require [quantit.adapter.core :refer [run-subscriber handle-order! update-before update-after]]
             [quantit.component.core :refer [update-state-before update-state-after]]
+            [quantit.strategy.core :refer [entry? exit? on-entry]]
+            [quantit.rule.core :refer [satisfied?]]
             [quantit.utils :refer [end? inspect]]
+            [quantit.order.core :as o]
+            [quantit.position.core :as p]
             [clojure.core.async :as async]
             [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component])
-  (:import (quantit.adapter.core SubscriberAdapter OrderAdapter)))
+  (:import (quantit.adapter.core SubscriberAdapter OrderAdapter)
+           (quantit.position.core Position)
+           (quantit.order.core Order)))
 
-;; TODO: Parameters should be changed to bars list (first bar is current one)
 (defn update-system-state [trade-system bars update-statefn]
   (component/update-system
     trade-system
@@ -21,13 +26,43 @@
 (defn update-system-state-after [trade-system bars]
   (update-system-state trade-system bars update-state-after))
 
-;; TODO: Add some kind of capability to start with bar history older than system start or maybe even delegate the
-;;        responsibility to the user to keep track of bar history through state
-(defn run-trade-system [trade-system ^SubscriberAdapter subscriber ^OrderAdapter orderer]
+(defn handle-bars [trade-system]
+  (let [strategy (:strategy trade-system)
+        entry-rule (entry? strategy)
+        exit-rule (exit? strategy)]
+    (fn [bars position]
+      (if-not (p/active? position)
+        ;; No current position
+        (if-let [satisfied (satisfied? entry-rule bars)]
+          (do (prn "Enter") (on-entry strategy {:bars      bars
+                                                :satisfied satisfied}))
+          ;; do nothing
+          nil)
+        ;; Position already open
+        (if (satisfied? exit-rule bars)
+          ;; todo: close position here
+          (do (prn "Exit")
+              (o/close position))
+          ;; do nothing
+          nil)))))
+
+(defn update-position [^Position position order]
+  (if order
+    (let [pos-vol (p/volume position)
+          order-vol (o/volume order)
+          new-vol (+ pos-vol order-vol)]
+      (-> position
+          (assoc :volume (Math/abs ^double new-vol))
+          (assoc :direction (if (pos? new-vol) :buy :sell))))
+    position))
+
+;; TODO: Add some kind of capability to start with bar history older than system start
+(defn run-trade-system [trade-system symbol ^SubscriberAdapter subscriber ^OrderAdapter orderer]
   {:pre [(s/valid? :quantit.adapter/subscriber subscriber)
          (s/valid? :quantit.adapter/orderer orderer)]}
   (let [barc (async/chan)
-        orderc (async/chan)]
+        orderc (async/chan)
+        handler (handle-bars trade-system)]
     (async/go (run-subscriber subscriber barc))
     (async/go (loop [orderer orderer
                      order (async/<! orderc)]
@@ -37,12 +72,14 @@
                     (recur (update-after orderer order) (async/<! orderc))))))
     (loop [trade-system trade-system
            bar (async/<!! barc)
-           bar-history '()]
+           bar-history '()
+           position (p/->Position symbol 0 :buy)]
       (let [bars (conj bar-history bar)]
         (if (not (end? bar))
-          (let [trade-system (update-system-state-before trade-system bars)]
-            (inspect bar)                                   ;; TODO: handle new incoming bar
+          (let [trade-system (update-system-state-before trade-system bars)
+                order (handler bars position)]              ;; TODO: Cancel out position when close
             (recur (update-system-state-after trade-system bars)
                    (async/<!! barc)
-                   (conj bar-history bar)))
+                   (conj bar-history bar)
+                   (update-position position order)))
           (do (async/>!! orderc bar)))))))
