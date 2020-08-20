@@ -4,14 +4,12 @@
             [quantit.strategy.core :refer [entry? exit? on-entry]]
             [quantit.rule.core :refer [satisfied?]]
             [quantit.utils :refer [end? inspect]]
-            [quantit.order.core :as o]
             [quantit.position.core :as p]
             [clojure.core.async :as async]
             [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component])
   (:import (quantit.adapter.core SubscriberAdapter OrderAdapter)
-           (quantit.position.core Position)
-           (quantit.order.core Order)))
+           (quantit.position.core Position)))
 
 (defn update-system-state [trade-system bars update-statefn]
   (component/update-system
@@ -30,31 +28,24 @@
   (let [strategy (:strategy trade-system)
         entry-rule (entry? strategy)
         exit-rule (exit? strategy)]
-    (fn [bars position]
+    (fn [bars ^Position position]
       (if-not (p/active? position)
         ;; No current position
         (if-let [satisfied (satisfied? entry-rule bars)]
-          (do (prn "Enter") (on-entry strategy {:bars      bars
-                                                :satisfied satisfied}))
+          (do (prn "Enter")
+              (on-entry strategy {:bars      bars
+                                  :satisfied satisfied}))
           ;; do nothing
           nil)
         ;; Position already open
         (if (satisfied? exit-rule bars)
           ;; todo: close position here
           (do (prn "Exit")
-              (o/close position))
+              (p/close-position position))
           ;; do nothing
           nil)))))
 
-(defn update-position [^Position position order]
-  (if order
-    (let [pos-vol (p/volume position)
-          order-vol (o/volume order)
-          new-vol (+ pos-vol order-vol)]
-      (-> position
-          (assoc :volume (Math/abs ^double new-vol))
-          (assoc :direction (if (pos? new-vol) :buy :sell))))
-    position))
+
 
 ;; TODO: Add some kind of capability to start with bar history older than system start
 (defn run-trade-system [trade-system symbol ^SubscriberAdapter subscriber ^OrderAdapter orderer]
@@ -73,7 +64,7 @@
     (loop [trade-system trade-system
            bar (async/<!! barc)
            bar-history '()
-           position (p/->Position symbol 0 :buy)]
+           position (p/new-position symbol)]
       (let [bars (conj bar-history bar)]
         (if (not (end? bar))
           (let [trade-system (update-system-state-before trade-system bars)
@@ -81,5 +72,5 @@
             (recur (update-system-state-after trade-system bars)
                    (async/<!! barc)
                    (conj bar-history bar)
-                   (update-position position order)))
-          (do (async/>!! orderc bar)))))))
+                   (if order (p/update-position position order) position)))
+          (do (async/>!! orderc 'end)))))))

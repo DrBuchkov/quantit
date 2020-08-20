@@ -51,8 +51,6 @@
             (fn [bars]                                      ;; TODO: Need to be able to pass position
               (let [short-sma (-> this :short-sma (value bars))
                     long-sma (-> this :long-sma (value bars))]
-                ;(prn "Short-sma: " short-sma)
-                ;(prn "Long-sma: " long-sma)
                 (< short-sma long-sma))))))
 
 (def trader (trade-system :strategy SimpleMovingAverageStrategy
