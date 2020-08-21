@@ -1,7 +1,8 @@
 (ns quantit.utils
   (:require [tick.alpha.api :as t])
   (:import (java.time ZonedDateTime)
-           (java.util GregorianCalendar)))
+           (java.util GregorianCalendar)
+           (yahoofinance.histquotes Interval)))
 
 (defn end? [x] (= x 'end))
 
@@ -11,6 +12,10 @@
 (defn inspect [body]
   (prn body)
   body)
+
+(def kw->Interval {:daily   Interval/DAILY
+                   :weekly  Interval/WEEKLY
+                   :monthly Interval/MONTHLY})
 
 (defn nyse-market-open-date-time
   ([]

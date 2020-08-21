@@ -1,7 +1,6 @@
 (ns quantit.core
   (:require
     ; Specs
-    [quantit.adapter.spec :refer :all]
     [quantit.backtest.spec :refer :all]
     [quantit.bar.spec :refer :all]
     [quantit.component.spec :refer :all]

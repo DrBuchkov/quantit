@@ -1,7 +1,6 @@
 (ns quantit.sandbox
   (:require
     ;; Specs
-    [quantit.adapter.spec :refer :all]
     [quantit.backtest.spec :refer :all]
     [quantit.bar.spec :refer :all]
     [quantit.component.spec :refer :all]
@@ -59,4 +58,4 @@
                                        [SimpleMovingAverage :-> :long-sma
                                         :params {:window 100}]]))
 
-(comment (backtest trader "SPY" :daily (t/new-date 2019 12 19)))
+(comment (backtest trader "SPY" :daily (t/new-date 2010 12 19)))

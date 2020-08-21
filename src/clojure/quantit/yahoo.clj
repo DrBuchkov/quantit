@@ -1,12 +1,8 @@
 (ns quantit.yahoo
   (:require [quantit.utils :refer :all])
-  (:import (yahoofinance.histquotes Interval HistoricalQuote)
+  (:import (yahoofinance.histquotes HistoricalQuote)
            (yahoofinance YahooFinance)
            (java.time LocalDate)))
-
-(def kw->Interval {:daily   Interval/DAILY
-                   :weekly  Interval/WEEKLY
-                   :monthly Interval/MONTHLY})
 
 (defn get-quotes [^String symbol ^LocalDate from ^LocalDate to interval]
   (let [interval (kw->Interval interval)

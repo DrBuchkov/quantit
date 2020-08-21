@@ -20,5 +20,4 @@
   :repl-options {:init-ns quantit.sandbox}
   :profiles {:uberjar {:aot :all}
              :dev     {:dependencies [[midje "1.9.9"]
-                                      [org.clojure/test.check "1.1.0"]]}
-             })
+                                      [org.clojure/test.check "1.1.0"]]}})

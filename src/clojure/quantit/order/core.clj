@@ -1,28 +1,30 @@
-(ns quantit.order.core)
+(ns quantit.order.core
+  (:require [tick.alpha.api :as t])
+  (:import (order MarketOrder OrderDirection)))
 
-(def order-types #{:buy :sell :buy-limit :sell-limit :buy-stop :sell-stop :buy-stop-limit :sell-stop-limit :close-by})
+(declare market-order-buy)
+(declare market-order-sell)
 
-(def order-states #{:started :placed :canceled :partial :filled :rejected :expired :request-add :request-modify :request-cancel})
-
-(def buy-sell {:buy  :sell
-               :sell :buy})
-
+(def buy-sell-java {:buy  OrderDirection/BUY
+                    :sell OrderDirection/SELL})
 (defprotocol Order
   (close [this])
   (same-type? [this order])
   (inverse? [this order])
-  (merge-order [this order]))
+  (merge-order [this order])
+  (to-java [this]))
 
-(defrecord MarketOrder [direction amount]
+(defrecord MarketOrderClj [direction amount datetime]
   Order
-  (close [this] (let [direction (-> this :direction buy-sell)]
-                  (->MarketOrder direction (:amount this))))
+  (close [this] (condp = (:direction this)
+                  :buy (market-order-sell (:amount this))
+                  :sell (market-order-buy (:amount this))))
 
-  (same-type? [_ order] (instance? MarketOrder order))
+  (same-type? [_ order] (instance? MarketOrderClj order))
 
   (inverse? [this order]
     (and (same-type? this order)
-         (= (-> this :direction buy-sell) (:direction order))))
+         (not= (-> this :direction) (:direction order))))
 
   (merge-order [this order]
     (cond
@@ -32,7 +34,9 @@
                               (cond
                                 ;; If new-amount is negative, then invert the direction
                                 ;; and amount is absolute value of new-amount
-                                (neg? new-amount) (->MarketOrder (buy-sell (:direction this)) (- new-amount))
+                                (neg? new-amount) (condp = (:direction this)
+                                                    :buy (market-order-sell (- new-amount))
+                                                    :sell (market-order-buy (- new-amount)))
                                 ;; If new-amount is zero, then the two orders cancel out.
                                 (zero? new-amount) nil
                                 ;; If new-amount is not negative and not zero, then return new order with
@@ -45,18 +49,17 @@
                                         (fn [this-amount order-amount]
                                           (+ this-amount order-amount))
                                         order-amount))
-      :else (ex-info "Trying to merge two orders of different type" {:a this :b order}))))
+      :else (ex-info "Trying to merge two orders of different type" {:a this :b order})))
+
+  (to-java [_] (MarketOrder. (buy-sell-java direction) amount datetime)))
 
 (defn market-order-buy [amount]
-  (->MarketOrder :buy amount))
+  (map->MarketOrderClj {:direction :buy
+                        :amount    amount}))
 
 (defn market-order-sell [amount]
-  (->MarketOrder :sell amount))
-
-(defn volume [order]
-  (condp = (:direction order)
-    :buy (:amount order)
-    :sell (- (:amount order))))
+  (map->MarketOrderClj {:direction :sell
+                        :amount    amount}))
 
 (defn order? [x]
   (satisfies? Order x))

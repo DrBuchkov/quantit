@@ -1,15 +1,13 @@
 (ns quantit.execution.core
-  (:require [quantit.adapter.core :refer [run-subscriber handle-order! update-before update-after]]
-            [quantit.component.core :refer [update-state-before update-state-after]]
+  (:require [quantit.component.core :refer [update-state-before update-state-after]]
             [quantit.strategy.core :refer [entry? exit? on-entry]]
             [quantit.rule.core :refer [satisfied?]]
             [quantit.utils :refer [end? inspect]]
             [quantit.position.core :as p]
             [clojure.core.async :as async]
-            [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component])
-  (:import (quantit.adapter.core SubscriberAdapter OrderAdapter)
-           (quantit.position.core Position)))
+  (:import (quantit.position.core Position)
+           (adapter.impl BaseSubscriberAdapter BaseOrderAdapter)))
 
 (defn update-system-state [trade-system bars update-statefn]
   (component/update-system
@@ -45,22 +43,15 @@
           ;; do nothing
           nil)))))
 
-
-
 ;; TODO: Add some kind of capability to start with bar history older than system start
-(defn run-trade-system [trade-system symbol ^SubscriberAdapter subscriber ^OrderAdapter orderer]
-  {:pre [(s/valid? :quantit.adapter/subscriber subscriber)
-         (s/valid? :quantit.adapter/orderer orderer)]}
+(defn run-trade-system [trade-system symbol ^BaseSubscriberAdapter subscriber ^BaseOrderAdapter orderer]
   (let [barc (async/chan)
         orderc (async/chan)
-        handler (handle-bars trade-system)]
-    (async/go (run-subscriber subscriber barc))
-    (async/go (loop [orderer orderer
-                     order (async/<! orderc)]
-                (when (not (end? order))
-                  (let [orderer (update-before orderer order)]
-                    (handle-order! orderer order)
-                    (recur (update-after orderer order) (async/<! orderc))))))
+        handler (handle-bars trade-system)
+        send-order (fn [order]
+                     (async/>!! orderc order))]
+    (async/go (._run_intern subscriber symbol barc))
+    (async/go (._run_intern orderer symbol orderc))
     (loop [trade-system trade-system
            bar (async/<!! barc)
            bar-history '()
@@ -69,8 +60,13 @@
         (if (not (end? bar))
           (let [trade-system (update-system-state-before trade-system bars)
                 order (handler bars position)]              ;; TODO: Cancel out position when close
+            (when order (if (or (vector? order)
+                                (seq? order))
+                          (apply send-order order)
+                          (send-order order)))
             (recur (update-system-state-after trade-system bars)
                    (async/<!! barc)
                    (conj bar-history bar)
                    (if order (p/update-position position order) position)))
-          (do (async/>!! orderc 'end)))))))
+          (do (prn "End")
+              (send-order 'end)))))))
