@@ -69,6 +69,7 @@
         (if (not (end? bar))
           (let [trade-system (update-system-state-before trade-system bars)
                 order (handler bars position)]
+            ;; When there's order(s), send to Order Adapter
             (when order (if (vec-or-seq? order)
                           (apply send-order order)
                           (send-order order)))
@@ -76,5 +77,7 @@
                    (async/<!! barc)
                    (conj bar-history bar)
                    (if order (p/update-position position order) position)))
+          ;; If message received from Subscriber Adapter is :end
+          ;; stop running trade-system and update Order Adapter
           (do (prn "End")
               (send-order :end)))))))
