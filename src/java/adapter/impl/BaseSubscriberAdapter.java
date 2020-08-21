@@ -4,7 +4,7 @@ import adapter.api.SubscriberAdapter;
 import bar.Bar;
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
-import clojure.lang.Symbol;
+import clojure.lang.Keyword;
 
 public abstract class BaseSubscriberAdapter implements SubscriberAdapter {
     private static final IFn pushToChannel = Clojure.var("clojure.core.async", ">!!");
@@ -28,7 +28,7 @@ public abstract class BaseSubscriberAdapter implements SubscriberAdapter {
     }
 
     public void end() {
-        pushToChannel.invoke(this.channel, Symbol.create("end"));
+        pushToChannel.invoke(this.channel, Keyword.find("end"));
     }
 
     public String getSymbol() {

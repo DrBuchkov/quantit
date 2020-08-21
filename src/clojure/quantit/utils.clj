@@ -4,7 +4,11 @@
            (java.util GregorianCalendar)
            (yahoofinance.histquotes Interval)))
 
-(defn end? [x] (= x 'end))
+(defn end? [x] (= x :end))
+
+(defn vec-or-seq? [x]
+  (or (vector? x)
+      (seq? x)))
 
 (defn flat-seq->map [x]
   (->> x (partition 2) (map vec) (into {})))

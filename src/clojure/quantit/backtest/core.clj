@@ -30,6 +30,3 @@
          orderer (BacktestOrderAdapter.)]
      (run-trade-system trade-system symbol subscriber orderer)
      (vec (.getOrders orderer)))))
-
-
-

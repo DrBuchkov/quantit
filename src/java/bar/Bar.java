@@ -16,13 +16,7 @@ public class Bar {
     private double volume;
     private double adjustedClose;
 
-    public Bar(Instant datetime,
-               double open,
-               double high,
-               double low,
-               double close,
-               double volume,
-               double adjustedClose) {
+    public Bar(Instant datetime, double open, double high, double low, double close, double volume, double adjustedClose) {
         this.datetime = datetime;
         this.open = open;
         this.high = high;

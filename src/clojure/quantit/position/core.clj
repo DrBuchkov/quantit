@@ -1,5 +1,6 @@
 (ns quantit.position.core
-  (:require [quantit.order.core :as o])
+  (:require [quantit.order.core :as o]
+            [quantit.utils :refer [vec-or-seq?]])
   (:import (quantit.order.core Order)))
 
 
@@ -28,9 +29,9 @@
                                   (recur (rest orders) (conj new-orders order))))))))
 
 (defn update-position [^Position position orders]
-  (cond (or (vector? orders)
-            (seq? orders)) (reduce add-order position orders)
-        (o/order? orders) (add-order position orders)))
+  (if (vec-or-seq? orders)
+    (reduce add-order position orders)
+    (add-order position orders)))
 
 (defn close-position [^Position position]
   (->> (:orders position)

@@ -3,7 +3,7 @@ package adapter.impl;
 import adapter.api.OrderAdapter;
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
-import clojure.lang.Symbol;
+import clojure.lang.Keyword;
 import order.BaseOrder;
 import order.MarketOrder;
 
@@ -23,7 +23,7 @@ public abstract class BaseOrderAdapter implements OrderAdapter {
         this.symbol = symbol;
         while (true) {
             Object msg = pullFromChannel.invoke(channel);
-            if (Symbol.create("end").equals(msg))
+            if (Keyword.find("end").equals(msg))
                 break;
             this._handle_order_intern(msg);
         }
