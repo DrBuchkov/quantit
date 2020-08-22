@@ -6,11 +6,12 @@ import order.MarketOrder;
 import java.util.ArrayList;
 
 public class BacktestOrderAdapter extends BaseOrderAdapter {
-    private ArrayList<Object> orders;
-
+    private final ArrayList<Object> orders;
+//    private final List<HistoricalQuote> quotes;
 
     public BacktestOrderAdapter() {
         this.orders = new ArrayList<>();
+//        this.quotes = quotes;
     }
 
     @Override
@@ -26,7 +27,7 @@ public class BacktestOrderAdapter extends BaseOrderAdapter {
         return orders;
     }
 
-    public void setOrders(ArrayList<Object> orders) {
-        this.orders = orders;
-    }
+//    public List<HistoricalQuote> getQuotes() {
+//        return quotes;
+//    }
 }

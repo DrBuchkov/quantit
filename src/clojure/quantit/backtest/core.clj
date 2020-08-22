@@ -2,16 +2,17 @@
   (:require [clojure.spec.alpha :as s]
             [quantit.execution.core :refer [run-trade-system]]
             [quantit.utils :refer [nyse-market-close-date-time nyse-market-open-date-time kw->Interval zoned-date-time->calendar end?]]
-            [tick.alpha.api :as t])
+            [quantit.yahoo :as yahoo]
+            [quantit.dataset.core :as d]
+            [tick.alpha.api :as t]
+            [clojure.core.matrix.dataset :as ds])
   (:import (java.time LocalDate)
            (backtest BacktestSubscriberAdapter BacktestOrderAdapter)))
 
 
-(defn- new-backtest-subscriber [^String symbol interval ^LocalDate from ^LocalDate to]
-  (let [interval (kw->Interval interval)
-        from (zoned-date-time->calendar (nyse-market-open-date-time from))
-        to (zoned-date-time->calendar (nyse-market-close-date-time to))]
-    (BacktestSubscriberAdapter. symbol from to interval)))
+(defn- init-backtest-adapters [^String symbol interval ^LocalDate from ^LocalDate to]
+  (let [quotes (yahoo/get-quotes symbol from to interval)]
+    [(BacktestSubscriberAdapter. quotes) (BacktestOrderAdapter.)]))
 
 (defn backtest
   ;([trade-system symbol bar-series]
@@ -26,7 +27,8 @@
 
   ([trade-system ^String symbol interval ^LocalDate from ^LocalDate to]
    {:pre [(s/valid? :quantit.backtest/interval interval)]}
-   (let [subscriber (new-backtest-subscriber symbol interval from to)
-         orderer (BacktestOrderAdapter.)]
+   (let [[subscriber orderer] (init-backtest-adapters symbol interval from to)]
      (run-trade-system trade-system symbol subscriber orderer)
-     (vec (.getOrders orderer)))))
+     (let [orders-ds (d/mapseq->ds (vec (.getOrders orderer)))
+           bars-ds (d/mapseq->ds (vec (.getBars subscriber)))]
+       (ds/merge-datasets bars-ds orders-ds)))))

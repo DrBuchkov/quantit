@@ -10,6 +10,7 @@
                  [com.yahoofinance-api/YahooFinanceAPI "3.15.0"]
                  [camel-snake-kebab "0.4.1"]
                  [tick "0.4.26-alpha"]
+                 [incanter "1.9.3"]
 
                  ;; TODO: Maybe not needed
                  [com.taoensso/timbre "4.10.0"]

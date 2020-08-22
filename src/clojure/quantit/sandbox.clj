@@ -1,4 +1,5 @@
 (ns quantit.sandbox
+  (:use [incanter.io])
   (:require
     ;; Specs
     [quantit.backtest.spec :refer :all]
@@ -18,9 +19,11 @@
                            nyse-market-close-date-time]]
     [quantit.backtest.core :refer [backtest]]
     [quantit.rule.core :as r]
+    [quantit.dataset.core :as d]
     [quantit.order.core :refer [market-order-buy]]
-    [clojure.core.match :as m]
-    [tick.alpha.api :as t]))
+    [tick.alpha.api :as t]
+    [clojure.core.matrix.dataset :as ds]
+    [clojure.core.matrix :as m]))
 
 (defindicator SimpleMovingAverage [:default-params {:window 10}]
   (value [this bars]
@@ -58,4 +61,5 @@
                                        [SimpleMovingAverage :-> :long-sma
                                         :params {:window 100}]]))
 
-(comment (backtest trader "SPY" :daily (t/new-date 2010 12 19)))
+(comment
+  (def report (backtest trader "SPY" :daily (t/new-date 2010 12 19))))

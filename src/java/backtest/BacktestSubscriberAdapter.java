@@ -2,79 +2,47 @@ package backtest;
 
 import adapter.impl.BaseSubscriberAdapter;
 import bar.Bar;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import yahoofinance.YahooFinance;
+import clojure.lang.PersistentArrayMap;
 import yahoofinance.histquotes.HistoricalQuote;
-import yahoofinance.histquotes.Interval;
 
-import java.io.IOException;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BacktestSubscriberAdapter extends BaseSubscriberAdapter {
-    private static final Logger logger = LoggerFactory.getLogger(BacktestSubscriberAdapter.class);
-    private String symbol;
-    private Calendar from;
-    private Calendar to;
-    private Interval interval;
+    private final List<HistoricalQuote> quotes;
+    private final List<PersistentArrayMap> bars;
 
-    public BacktestSubscriberAdapter(String symbol, Calendar from, Calendar to, Interval interval) {
-        this.symbol = symbol;
-        this.from = from;
-        this.to = to;
-        this.interval = interval;
+    public BacktestSubscriberAdapter(List<HistoricalQuote> quotes) {
+        this.quotes = quotes;
+        bars = new ArrayList<>();
     }
 
     @Override
     public void run(String symbol) {
-        try {
-            List<HistoricalQuote> quotes = YahooFinance.get(symbol).getHistory(this.from, this.to, this.interval);
-            for (HistoricalQuote quote :
-                    quotes) {
-                this.next(new Bar(quote.getDate().toInstant(),
-                        quote.getOpen().doubleValue(),
-                        quote.getHigh().doubleValue(),
-                        quote.getLow().doubleValue(),
-                        quote.getClose().doubleValue(),
-                        quote.getVolume().doubleValue(),
-                        quote.getAdjClose().doubleValue()));
-            }
-            this.end();
-        } catch (IOException e) {
-            logger.error("Could not find data for symbol " + symbol, e.getMessage());
+        for (HistoricalQuote quote :
+                this.quotes) {
+            this.next(new Bar(quote.getDate().toInstant(),
+                    quote.getOpen().doubleValue(),
+                    quote.getHigh().doubleValue(),
+                    quote.getLow().doubleValue(),
+                    quote.getClose().doubleValue(),
+                    quote.getVolume().doubleValue(),
+                    quote.getAdjClose().doubleValue()));
         }
+        this.end();
     }
 
-    public Interval getInterval() {
-        return interval;
+    @Override
+    public void next(Bar bar) {
+        this.bars.add(bar.toPersistentArrayMap());
+        super.next(bar);
     }
 
-    public void setInterval(Interval interval) {
-        this.interval = interval;
+    public List<HistoricalQuote> getQuotes() {
+        return quotes;
     }
 
-    public String getSymbol() {
-        return symbol;
-    }
-
-    public void setSymbol(String symbol) {
-        this.symbol = symbol;
-    }
-
-    public Calendar getFrom() {
-        return from;
-    }
-
-    public void setFrom(Calendar from) {
-        this.from = from;
-    }
-
-    public Calendar getTo() {
-        return to;
-    }
-
-    public void setTo(Calendar to) {
-        this.to = to;
+    public List<PersistentArrayMap> getBars() {
+        return bars;
     }
 }
