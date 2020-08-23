@@ -7,12 +7,12 @@ import clojure.lang.IFn;
 import clojure.lang.Keyword;
 
 public abstract class BaseSubscriberAdapter implements SubscriberAdapter {
-    private static final IFn pushToChannel = Clojure.var("clojure.core.async", ">!!");
-
     static {
         IFn require = Clojure.var("clojure.core", "require");
         require.invoke(Clojure.read("clojure.core.async"));
     }
+
+    private static final IFn pushToChannel = Clojure.var("clojure.core.async", ">!!");
 
     private String symbol;
     private Object channel;
